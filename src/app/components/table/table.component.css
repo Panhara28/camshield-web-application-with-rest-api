@@ -1,0 +1,31 @@
+.card {
+  margin: auto;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+.priority-low {
+  background-color: #e6f0ff;
+  color: #007bff;
+}
+.priority-medium {
+  background-color: #d7effe;
+  color: #00a3ff;
+}
+.priority-high {
+  background-color: #ddfbf7;
+  color: #00c2a9;
+}
+.priority-very-high {
+  background-color: #ffe6e6;
+  color: #ff4d4f;
+}
+.dropdown-toggle::after {
+  margin-left: 0.5rem;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}

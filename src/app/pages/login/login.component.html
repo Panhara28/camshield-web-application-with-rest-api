@@ -1,0 +1,98 @@
+<div
+  class="container-fluid"
+  style="background: linear-gradient(to bottom right, #add8e6, #0077be)"
+>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex vh-100 align-items-center justify-content-center">
+        <div class="img-wrapper me-5">
+          <img src="/banner-camshield.png" style="width: 100%" />
+        </div>
+        <div
+          class="card p-4 shadow-sm border-white"
+          style="max-width: 400px; width: 100%; border-radius: 0.75rem"
+        >
+          <div class="card-body">
+            <h1
+              class="text-center fw-bold mb-1 cs-primary-text-color mb-4"
+              style="line-height: 35px"
+            >
+              Sign in
+            </h1>
+
+            <!-- Social Buttons -->
+            <div class="d-flex gap-2 mb-3">
+              <button
+                class="button-36 cs-gradient-border flex-fill d-flex align-items-center justify-content-center"
+              >
+                <i class="bi bi-google me-2"></i> Use Google
+              </button>
+              <button
+                class="button-36 flex-fill d-flex align-items-center justify-content-center"
+              >
+                <i class="bi bi-apple me-2"></i> Use Apple
+              </button>
+            </div>
+
+            <!-- Divider -->
+            <div class="d-flex align-items-center mb-3">
+              <hr class="flex-grow-1" />
+              <span class="px-2 small text-muted">OR</span>
+              <hr class="flex-grow-1" />
+            </div>
+            <form (ngSubmit)="onLogin()">
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  class="form-control"
+                  placeholder="email@gmail.com"
+                  [(ngModel)]="email"
+                  name="email"
+                />
+              </div>
+
+              <div class="mb-2 position-relative">
+                <label for="password" class="form-label">Password</label>
+                <input
+                  id="password"
+                  class="form-control"
+                  placeholder="Enter Password"
+                  name="password"
+                  [(ngModel)]="password"
+                  [type]="showPassword ? 'text' : 'password'"
+                />
+                <i
+                  class="bi"
+                  style="
+                    position: absolute;
+                    top: 73%;
+                    right: 1rem;
+                    transform: translateY(-50%);
+                    cursor: pointer;
+                  "
+                ></i>
+                <a
+                  href="#"
+                  class="small text-secondary"
+                  style="position: absolute; top: 0; right: 0"
+                  >Forgot Password?</a
+                >
+              </div>
+
+              <div class="form-check mb-3">
+                <input id="remember" type="checkbox" class="form-check-input" />
+                <label for="remember" class="form-check-label"
+                  >Remember me</label
+                >
+              </div>
+
+              <button type="submit" class="button-36 w-100">Sign In</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

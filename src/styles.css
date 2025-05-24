@@ -1,1 +1,26 @@
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
 /* You can add global styles to this file, and also import other style files */
+.cs-primary-text-color {
+  background: linear-gradient(to bottom right, #55c2e6, #0077be);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* Optional for compatibility and control */
+  background-clip: text;
+}
+
+.button-36 {
+  background-image: linear-gradient(92.88deg, #55c2e6 9.16%, #0077be 64.72%);
+  border-radius: 8px;
+  border-style: none;
+  box-sizing: border-box;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: "Inter UI", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+    sans-serif;
+  font-size: 16px;
+  text-align: center;
+  padding: 10px;
+}
