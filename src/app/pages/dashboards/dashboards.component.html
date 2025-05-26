@@ -1,8 +1,9 @@
 <app-layouts>
   <div class="container-xl px-4">
-    <h2 class="mt-5 mb-0">Dashboards</h2>
-    <p>Three dashboard examples to get you started!</p>
-    <hr class="mt-0 mb-4" />
+    <app-page-title
+      title="Dashboard"
+      description="Three dashboard examples to get you started!"
+    ></app-page-title>
     <div class="row">
       <div class="col-lg-3 col-md-6 mb-3">
         <app-cards
@@ -35,7 +36,18 @@
     </div>
     <div class="row">
       <div class="col-lg-12">
-        <app-table></app-table>
+        <app-table
+          [data]="users"
+          [pageSize]="5"
+          [displayFields]="['profilePicture', 'name', 'email', 'role.name']"
+          [imageFields]="['profilePicture']"
+          [headerLabels]="{
+            profilePicture: 'Avatar',
+            name: 'Full Name',
+            email: 'Email Address',
+            'role.name': 'Role'
+          }"
+        ></app-table>
       </div>
     </div>
   </div>

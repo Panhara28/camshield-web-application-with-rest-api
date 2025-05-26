@@ -1,11 +1,12 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { LoginGuard } from './guards/login.guard';
+import { ListComponent } from './pages/users/list/list.component';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: '/dashboard',
     pathMatch: 'full',
   },
   {
@@ -20,6 +21,16 @@ export const routes: Routes = [
       import('./pages/dashboards/dashboards.component').then(
         (m) => m.DashboardsComponent
       ),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'users',
+    children: [
+      {
+        path: 'lists',
+        component: ListComponent,
+      },
+    ],
     canActivate: [AuthGuard],
   },
 ];

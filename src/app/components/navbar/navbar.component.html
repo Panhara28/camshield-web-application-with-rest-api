@@ -5,11 +5,12 @@
   <button
     class="btn btn-icon btn-transparent-dark order-1 order-lg-0 me-2 ms-lg-2 me-lg-0"
     id="sidebarToggle"
+    (click)="toggleSidebar()"
   >
-    <i data-feather="menu"></i>
+    <i class="fa-solid fa-bars" style="font-size: 20px"></i>
   </button>
 
-  <a class="navbar-brand pe-3 ps-4 ps-lg-2" href="index-2.html">CamShield</a>
+  <a class="navbar-brand pe-3 ps-4 ps-lg-2" routerLink="/">CamShield</a>
 
   <ul class="navbar-nav align-items-center ms-auto">
     <li class="nav-item dropdown no-caret dropdown-user me-3 me-lg-4">
@@ -21,27 +22,22 @@
         data-bs-toggle="dropdown"
         aria-haspopup="true"
         aria-expanded="false"
-        ><img
-          class="img-fluid"
-          src="assets/img/illustrations/profiles/profile-1.png"
+        ><img class="img-fluid" [src]="profilePicture"
       /></a>
       <div
         class="dropdown-menu dropdown-menu-end border-0 shadow animated--fade-in-up"
         aria-labelledby="navbarDropdownUserImage"
       >
         <h6 class="dropdown-header d-flex align-items-center">
-          <img
-            class="dropdown-user-img"
-            src="assets/img/illustrations/profiles/profile-1.png"
-          />
+          <img class="dropdown-user-img" [src]="profilePicture" />
           <div class="dropdown-user-details">
-            <div class="dropdown-user-details-name">Valerie Luna</div>
+            <div class="dropdown-user-details-name">{{ profileName }}</div>
             <div class="dropdown-user-details-email">
               <a
-                href="cdn-cgi/l/email-protection.html"
+                href="#"
                 class="__cf_email__"
                 data-cfemail="eb9d879e858aab8a8487c5888486"
-                >[email&#160;protected]</a
+                >{{ roleName }}</a
               >
             </div>
           </div>
@@ -108,7 +104,7 @@
           >
             <a
               class="nav-link"
-              routerLink="/users"
+              routerLink="/users/lists"
               routerLinkActive="active"
               ariaCurrentWhenActive="page"
             >

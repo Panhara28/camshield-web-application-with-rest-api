@@ -21,94 +21,56 @@
   <div class="table-responsive">
     <table class="table align-middle">
       <thead>
-        <tr class="text-muted">
-          <th>Client</th>
-          <th>Name</th>
-          <th>Priority</th>
-          <th class="text-end">Budget</th>
+        <tr>
+          <th *ngFor="let header of headers">
+            {{ getHeaderLabel(header) }}
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>
-            <div class="d-flex align-items-center gap-2">
+        <tr *ngFor="let row of displayedData">
+          <td *ngFor="let header of headers">
+            <ng-container *ngIf="imageFields.includes(header); else textCell">
               <img
-                src="https://i.pravatar.cc/40?u=sunil"
-                alt="Sunil"
-                class="avatar"
+                [src]="getValueByPath(row, header) || '/account.png'"
+                alt="avatar"
+                class="rounded-circle"
+                width="40"
+                height="40"
               />
-              <div>
-                <div class="fw-semibold">Sunil Joshi</div>
-                <div class="text-muted small">Web Designer</div>
-              </div>
-            </div>
+            </ng-container>
+            <ng-template #textCell>
+              {{ getValueByPath(row, header) }}
+            </ng-template>
           </td>
-          <td class="text-muted">Digital Agency</td>
-          <td><span class="badge rounded-pill priority-low">Low</span></td>
-          <td class="text-end fw-semibold">$3.9K</td>
-        </tr>
-
-        <tr>
-          <td>
-            <div class="d-flex align-items-center gap-2">
-              <img
-                src="https://i.pravatar.cc/40?u=andrew"
-                alt="Andrew"
-                class="avatar"
-              />
-              <div>
-                <div class="fw-semibold">Andrew Liock</div>
-                <div class="text-muted small">Project Manager</div>
-              </div>
-            </div>
-          </td>
-          <td class="text-muted">Real Homes</td>
-          <td>
-            <span class="badge rounded-pill priority-medium">Medium</span>
-          </td>
-          <td class="text-end fw-semibold">$23.9K</td>
-        </tr>
-
-        <tr>
-          <td>
-            <div class="d-flex align-items-center gap-2">
-              <img
-                src="https://i.pravatar.cc/40?u=biaca"
-                alt="Biaca"
-                class="avatar"
-              />
-              <div>
-                <div class="fw-semibold">Biaca George</div>
-                <div class="text-muted small">Developer</div>
-              </div>
-            </div>
-          </td>
-          <td class="text-muted">MedicalPro Theme</td>
-          <td><span class="badge rounded-pill priority-high">High</span></td>
-          <td class="text-end fw-semibold">$12.9K</td>
-        </tr>
-
-        <tr>
-          <td>
-            <div class="d-flex align-items-center gap-2">
-              <img
-                src="https://i.pravatar.cc/40?u=nirav"
-                alt="Nirav"
-                class="avatar"
-              />
-              <div>
-                <div class="fw-semibold">Nirav Joshi</div>
-                <div class="text-muted small">Frontend Eng</div>
-              </div>
-            </div>
-          </td>
-          <td class="text-muted">Elite Admin</td>
-          <td>
-            <span class="badge rounded-pill priority-very-high">Very High</span>
-          </td>
-          <td class="text-end fw-semibold">$2.6K</td>
         </tr>
       </tbody>
     </table>
   </div>
+  <nav *ngIf="totalPages > 1" class="mt-3">
+    <ul class="pagination justify-content-center">
+      <li
+        class="page-item"
+        [class.disabled]="currentPage === 1"
+        (click)="changePage(currentPage - 1)"
+      >
+        <a class="page-link">Previous</a>
+      </li>
+      <li
+        class="page-item"
+        *ngFor="let page of pages"
+        [class.active]="page === currentPage"
+        (click)="changePage(page)"
+      >
+        <a class="page-link">{{ page }}</a>
+      </li>
+      <li
+        class="page-item"
+        [class.disabled]="currentPage === totalPages"
+        (click)="changePage(currentPage + 1)"
+      >
+        <a class="page-link">Next</a>
+      </li>
+    </ul>
+  </nav>
 </div>
