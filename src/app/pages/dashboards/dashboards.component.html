@@ -37,6 +37,7 @@
     <div class="row">
       <div class="col-lg-12">
         <app-table
+          tableTitle="User list"
           [data]="users"
           [pageSize]="5"
           [displayFields]="['profilePicture', 'name', 'email', 'role.name']"
@@ -45,7 +46,7 @@
             profilePicture: 'Avatar',
             name: 'Full Name',
             email: 'Email Address',
-            'role.name': 'Role'
+            'role.name': 'Role',
           }"
         ></app-table>
       </div>
