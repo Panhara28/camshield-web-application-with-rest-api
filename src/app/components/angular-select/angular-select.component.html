@@ -1,0 +1,25 @@
+<div class="select-wrapper" [class.disabled]="disabled">
+  <div class="select-display">
+    <input
+      type="text"
+      [disabled]="disabled || loading"
+      [(ngModel)]="searchTerm"
+      [placeholder]="selected ? selected.label : placeholder"
+    />
+    <button *ngIf="clearable && selected" (click)="clearSelection()">×</button>
+    <div class="loader" *ngIf="loading">Loading...</div>
+  </div>
+
+  <ul
+    class="select-options"
+    *ngIf="!disabled && !loading && filteredOptions.length"
+  >
+    <li *ngFor="let option of filteredOptions" (click)="selectOption(option)">
+      {{ option.label }}
+    </li>
+  </ul>
+
+  <div *ngIf="!loading && filteredOptions.length === 0" class="no-options">
+    No options found
+  </div>
+</div>

@@ -1,142 +1,195 @@
 <div class="card p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h5 class="mb-0 fw-semibold">{{ tableTitle }}</h5>
-    <div class="dropdown">
-      <button
-        class="btn btn-light dropdown-toggle"
-        type="button"
-        id="monthDropdown"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
-        January
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="monthDropdown">
-        <li><a class="dropdown-item" href="#">February</a></li>
-        <li><a class="dropdown-item" href="#">March</a></li>
-      </ul>
-    </div>
-  </div>
+  <h5 class="mb-4 fw-semibold">{{ tableTitle }}</h5>
+  <div class="row">
+    <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+      <div class="col-lg-12">
+        <div class="filter-wrapper row">
+          <div *ngFor="let field of filterFields" class="form-group col-lg-3">
+            <ng-container [ngSwitch]="field.type">
+              <input
+                *ngSwitchCase="'text'"
+                type="text"
+                class="form-control"
+                [(ngModel)]="filters[field.key]"
+                [placeholder]="'Search by ' + field.label"
+              />
+              <select
+                *ngSwitchCase="'select'"
+                class="form-select"
+                [(ngModel)]="filters[field.key]"
+              >
+                <option value="" disabled selected hidden>
+                  {{ getSelectPlaceholder(field) }}
+                </option>
+                <option
+                  *ngFor="let option of field.options"
+                  [value]="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </ng-container>
+          </div>
 
-  <div class="table-responsive">
-    <div
-      *ngIf="selectedRows.length > 0"
-      class="mb-3 d-flex justify-content-between align-items-center"
-    >
-      <span>{{ selectedRows.length }} selected</span>
-      <div class="dropdown">
-        <button
-          class="btn btn-sm btn-danger dropdown-toggle"
-          type="button"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-        >
-          Bulk Actions
-        </button>
-        <ul class="dropdown-menu">
-          <li>
-            <a class="dropdown-item text-danger" (click)="onBulkRemove()"
-              >Remove Selected</a
+          <div class="form-group col-lg-3">
+            <button
+              class="btn btn-outline-primary me-3"
+              (click)="onFilterChange()"
             >
-          </li>
-        </ul>
+              Search
+            </button>
+            <button
+              *ngIf="isAnyFilterActive()"
+              class="btn btn-outline-danger"
+              (click)="clearFilters()"
+            >
+              Clear
+            </button>
+          </div>
+          <div class="form-group col-lg-3">
+            <div class="bulk-button-wrapper mt-4">
+              <div
+                *ngIf="selectedRows.length > 0"
+                class="d-flex align-items-center gap-2"
+              >
+                <span class="fw-semibold"
+                  >{{ selectedRows.length }} selected</span
+                >
+                <div class="dropdown">
+                  <button
+                    class="btn btn-danger dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    Actions
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a
+                        class="dropdown-item text-danger"
+                        (click)="onBulkRemove()"
+                        >Remove Selected</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <table class="table align-middle">
-      <thead>
-        <tr class="text-muted">
-          <th>
-            <input
-              type="checkbox"
-              [checked]="allSelected"
-              (change)="toggleAllSelection($event)"
-            />
-          </th>
-          <th *ngFor="let header of headers">
-            {{ getHeaderLabel(header) }}
-          </th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of displayedData">
-          <td>
-            <input
-              type="checkbox"
-              [checked]="isSelected(row.id)"
-              (change)="toggleSelection(row.id)"
-            />
-          </td>
-          <td *ngFor="let header of headers">
-            <ng-container *ngIf="imageFields.includes(header); else textCell">
-              <img
-                [src]="getValueByPath(row, header) || '/account.png'"
-                alt="avatar"
-                class="rounded-circle"
-                width="40"
-                height="40"
+
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr class="text-muted">
+            <th>
+              <input
+                type="checkbox"
+                [checked]="allSelected"
+                (change)="toggleAllSelection($event)"
               />
-            </ng-container>
-            <ng-template #textCell>
-              {{ getValueByPath(row, header) }}
-            </ng-template>
-          </td>
-          <td>
-            <div class="dropdown">
-              <button
-                class="btn btn-sm btn-light dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Actions
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a class="dropdown-item" (click)="onView(row.id)">View</a>
-                </li>
-                <li>
-                  <a class="dropdown-item" (click)="onEdit(row.id)">Edit</a>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <a
-                    class="dropdown-item text-danger"
-                    (click)="onRemove(row.id)"
-                    >Remove</a
-                  >
-                </li>
-              </ul>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </th>
+            <th *ngFor="let header of headers">
+              {{ getHeaderLabel(header) }}
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of displayedData">
+            <td>
+              <input
+                type="checkbox"
+                [checked]="isSelected(row.id)"
+                (change)="toggleSelection(row.id)"
+              />
+            </td>
+            <td *ngFor="let header of headers">
+              <ng-container *ngIf="imageFields.includes(header); else textCell">
+                <img
+                  [src]="getValueByPath(row, header) || '/account.png'"
+                  alt="avatar"
+                  class="rounded-circle"
+                  width="40"
+                  height="40"
+                />
+              </ng-container>
+              <ng-template #textCell>
+                {{ getValueByPath(row, header) }}
+              </ng-template>
+            </td>
+            <td>
+              <div class="dropdown">
+                <button
+                  class="btn btn-sm btn-light dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Actions
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item" (click)="onView(row.id)">View</a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" (click)="onEdit(row.id)">Edit</a>
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <a
+                      class="dropdown-item text-danger"
+                      (click)="onRemove(row.id)"
+                      >Remove</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="small text-center">
+      Showing page
+      {{ +meta.page }}
+      to
+      {{
+        +meta.page * +meta.limit > +meta.total
+          ? +meta.total
+          : +meta.page * +meta.limit
+      }}
+      of
+      {{ meta.total }} users
+    </div>
+
+    <nav *ngIf="meta.totalPages > 1" class="mt-3">
+      <ul class="pagination justify-content-center">
+        <li
+          class="page-item"
+          [class.disabled]="meta.page <= 1"
+          (click)="meta.page > 1 && onPageChange(meta.page - 1)"
+        >
+          <a class="page-link">Previous</a>
+        </li>
+        <li
+          class="page-item"
+          *ngFor="let page of pages"
+          [class.active]="page === +meta.page"
+          (click)="onPageChange(page)"
+        >
+          <a class="page-link">{{ page }}</a>
+        </li>
+        <li
+          class="page-item"
+          [class.disabled]="+meta.page >= meta.totalPages"
+          (click)="+meta.page < meta.totalPages && onPageChange(+meta.page + 1)"
+        >
+          <a class="page-link">Next</a>
+        </li>
+      </ul>
+    </nav>
   </div>
-  <nav *ngIf="totalPages > 1" class="mt-3">
-    <ul class="pagination justify-content-center">
-      <li
-        class="page-item"
-        [class.disabled]="currentPage === 1"
-        (click)="changePage(currentPage - 1)"
-      >
-        <a class="page-link">Previous</a>
-      </li>
-      <li
-        class="page-item"
-        *ngFor="let page of pages"
-        [class.active]="page === currentPage"
-        (click)="changePage(page)"
-      >
-        <a class="page-link">{{ page }}</a>
-      </li>
-      <li
-        class="page-item"
-        [class.disabled]="currentPage === totalPages"
-        (click)="changePage(currentPage + 1)"
-      >
-        <a class="page-link">Next</a>
-      </li>
-    </ul>
-  </nav>
 </div>

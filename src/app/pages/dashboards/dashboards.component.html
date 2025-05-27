@@ -39,7 +39,8 @@
         <app-table
           tableTitle="User list"
           [data]="users"
-          [pageSize]="5"
+          [meta]="meta"
+          [pageSize]="meta.limit"
           [displayFields]="['profilePicture', 'name', 'email', 'role.name']"
           [imageFields]="['profilePicture']"
           [headerLabels]="{
@@ -48,6 +49,21 @@
             email: 'Email Address',
             'role.name': 'Role',
           }"
+          [filterFields]="[
+            { key: 'name', label: 'Fullname', type: 'text' },
+            { key: 'email', label: 'Email', type: 'text' },
+            {
+              key: 'role',
+              label: 'Role',
+              type: 'select',
+              options: [
+                { value: 'chocolate', label: 'Chocolate' },
+                { value: 'strawberry', label: 'Strawberry' },
+                { value: 'vanilla', label: 'Vanilla' }
+              ]
+            }
+          ]"
+          (filterChanged)="onFilterChanged($event)"
         ></app-table>
       </div>
     </div>

@@ -1,7 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+
+interface PaginationMeta {
+  page?: number;
+  totalPages?: number;
+  total?: number;
+  limit?: number;
+}
+
+interface FilterField {
+  key: string;
+  label: string;
+  type?: 'text' | 'select';
+  options?: { label: string; value: any }[];
+}
 
 @Component({
   selector: 'app-table',
@@ -11,12 +32,17 @@ import { Router } from '@angular/router';
 })
 export class TableComponent implements OnChanges {
   @Input() data: any[] = [];
-  @Input() pageSize = 5;
+  @Input() meta: any = { page: 1, totalPages: 1, total: 0, limit: 10 };
+  @Input() pageSize: number | undefined = 5;
   @Input() displayFields: string[] = [];
   @Input() imageFields: string[] = [];
   @Input() headerLabels: { [key: string]: string } = {};
+  @Input() tableTitle: string = '';
+  @Output() searchChanged = new EventEmitter<string>();
+  @Input() filterFields: FilterField[] = [];
+  @Output() filterChanged = new EventEmitter<any>();
 
-  tableTitle: string = '';
+  filters: { [key: string]: string } = {};
   searchTerm: string = '';
   currentPage: number = 1;
   filteredData: any[] = [];
@@ -25,16 +51,60 @@ export class TableComponent implements OnChanges {
   selectedRows: number[] = [];
   allSelected: boolean = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.initializeHeaders();
+    for (const field of this.filterFields) {
+      const value = this.route.snapshot.queryParamMap.get(field.key);
+      if (value) {
+        this.filters[field.key] = value;
+      }
+    }
+    this.emitFilters();
+  }
+
+  onFilterChange() {
+    const queryParams: any = { page: 1 };
+    for (const key in this.filters) {
+      if (this.filters[key]) {
+        queryParams[key] = this.filters[key];
+      }
+    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
+    this.emitFilters();
+  }
+
+  emitFilters() {
+    this.filterChanged.emit(this.filters);
+  }
+
+  isAnyFilterActive(): boolean {
+    return Object.values(this.filters).some((val) => val);
+  }
+
+  clearFilters() {
+    this.filters = {};
+    const clearParams: any = { page: 1 };
+    for (const field of this.filterFields) {
+      clearParams[field.key] = null;
+    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: clearParams,
+      queryParamsHandling: 'merge',
+    });
+    this.emitFilters();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data']) {
       this.initializeHeaders();
-      this.filterData();
+      this.filteredData = this.data;
+      this.updateDisplayedData();
     }
   }
 
@@ -56,25 +126,10 @@ export class TableComponent implements OnChanges {
     return this.headerLabels[key] || key;
   }
 
-  filterData() {
-    this.filteredData = this.data.filter((item) =>
-      Object.values(item).some((value) =>
-        value?.toString().toLowerCase().includes(this.searchTerm.toLowerCase())
-      )
-    );
-    this.currentPage = 1;
-    this.updateDisplayedData();
-  }
-
   updateDisplayedData() {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
+    const startIndex = (this.currentPage - 1) * this.pageSize!;
+    const endIndex = startIndex + this.pageSize!;
     this.displayedData = this.filteredData.slice(startIndex, endIndex);
-  }
-
-  changePage(page: number) {
-    this.currentPage = page;
-    this.updateDisplayedData();
   }
 
   onEdit(id: number) {
@@ -124,13 +179,44 @@ export class TableComponent implements OnChanges {
     }
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.filteredData.length / this.pageSize);
-  }
-
   get pages(): number[] {
-    return Array(this.totalPages)
+    return Array(this.meta.totalPages)
       .fill(0)
       .map((_, i) => i + 1);
+  }
+
+  onPageChange(page: number): void {
+    // if (Number(page) < 1 || Number(page) > this.meta.totalPages) return;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  filterData() {
+    this.filteredData = this.data.filter((item) =>
+      Object.values(item).some((value) =>
+        value?.toString().toLowerCase().includes(this.searchTerm.toLowerCase())
+      )
+    );
+    this.currentPage = 1;
+    this.updateDisplayedData();
+  }
+
+  onSearchSubmit() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: 1, name: this.searchTerm },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  isSearchActive(): boolean {
+    return this.searchTerm.trim().length > 0;
+  }
+
+  getSelectPlaceholder(field: FilterField): string {
+    return 'Select ' + field.label;
   }
 }
