@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DataNotFoundComponent } from '../data-not-found/data-not-found.component';
 
 interface PaginationMeta {
   page?: number;
@@ -26,12 +27,13 @@ interface FilterField {
 
 @Component({
   selector: 'app-table',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, DataNotFoundComponent],
   templateUrl: './table.component.html',
   styleUrl: './table.component.css',
 })
 export class TableComponent implements OnChanges {
   @Input() data: any[] = [];
+  @Input() roles: any[] = [];
   @Input() meta: any = { page: 1, totalPages: 1, total: 0, limit: 10 };
   @Input() pageSize: number | undefined = 5;
   @Input() displayFields: string[] = [];
@@ -54,13 +56,13 @@ export class TableComponent implements OnChanges {
   constructor(private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    for (const field of this.filterFields) {
-      const value = this.route.snapshot.queryParamMap.get(field.key);
-      if (value) {
-        this.filters[field.key] = value;
-      }
-    }
-    this.emitFilters();
+    // for (const field of this.filterFields) {
+    //   const value = this.route.snapshot.queryParamMap.get(field.key);
+    //   if (value) {
+    //     this.filters[field.key] = value;
+    //   }
+    // }
+    // this.emitFilters();
   }
 
   onFilterChange() {
@@ -74,6 +76,7 @@ export class TableComponent implements OnChanges {
       relativeTo: this.route,
       queryParams,
       queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
     this.emitFilters();
   }
@@ -96,6 +99,7 @@ export class TableComponent implements OnChanges {
       relativeTo: this.route,
       queryParams: clearParams,
       queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
     this.emitFilters();
   }
@@ -185,12 +189,17 @@ export class TableComponent implements OnChanges {
       .map((_, i) => i + 1);
   }
 
+  get hasData(): boolean {
+    return this.displayedData.length > 0;
+  }
+
   onPageChange(page: number): void {
     // if (Number(page) < 1 || Number(page) > this.meta.totalPages) return;
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page },
       queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
@@ -209,6 +218,7 @@ export class TableComponent implements OnChanges {
       relativeTo: this.route,
       queryParams: { page: 1, name: this.searchTerm },
       queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 

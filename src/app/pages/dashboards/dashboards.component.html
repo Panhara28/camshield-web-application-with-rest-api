@@ -39,6 +39,7 @@
         <app-table
           tableTitle="User list"
           [data]="users"
+          [roles]="roles"
           [meta]="meta"
           [pageSize]="meta.limit"
           [displayFields]="['profilePicture', 'name', 'email', 'role.name']"
@@ -56,11 +57,7 @@
               key: 'role',
               label: 'Role',
               type: 'select',
-              options: [
-                { value: 'chocolate', label: 'Chocolate' },
-                { value: 'strawberry', label: 'Strawberry' },
-                { value: 'vanilla', label: 'Vanilla' }
-              ]
+              options: roles
             }
           ]"
           (filterChanged)="onFilterChanged($event)"

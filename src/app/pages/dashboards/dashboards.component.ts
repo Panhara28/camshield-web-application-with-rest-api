@@ -5,6 +5,7 @@ import { TableComponent } from '../../components/table/table.component';
 import { PageTitleComponent } from '../../components/page-title/page-title.component';
 import { UserService } from '../../services/users.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { RolesService } from '../../services/roles.service';
 
 interface PaginationMeta {
   page?: number;
@@ -28,24 +29,36 @@ export class DashboardsComponent {
   users: any[] = [];
   // meta: any = { page: 1, totalPages: 65, total: 0, limit: 10 };
   meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
-
+  roles: any[] = [];
   constructor(
     private userService: UserService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private RoleService: RolesService
   ) {}
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
-      const name = params['name'];
-      const page = +params['page'] || 1;
+      const paramsUserName = params['name'];
+      const paramsUserPage = +params['page'] || 1;
       this.userService
         .getUsers({
-          pagination: { page },
-          filter: name ? { name } : undefined,
+          pagination: { page: paramsUserPage },
+          filter: paramsUserName ? { name: paramsUserName } : undefined,
         })
         .subscribe((res: any) => {
           this.users = res.data;
           this.meta = res.meta;
         });
+
+      this.RoleService.getRoles({
+        pagination: { page: 1 },
+      }).subscribe((res: any) => {
+        res.data.map((item: any) => {
+          this.roles.push({
+            value: item.id,
+            label: item.name,
+          });
+        });
+      });
     });
   }
 

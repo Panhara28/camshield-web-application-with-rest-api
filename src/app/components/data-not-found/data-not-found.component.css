@@ -1,0 +1,30 @@
+.data-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  background-color: #fefefe;
+  color: #555;
+  font-family: Arial, sans-serif;
+  margin: 40px auto;
+}
+
+.data-not-found .icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.data-not-found .title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.data-not-found .subtitle {
+  font-size: 14px;
+  color: #888;
+}

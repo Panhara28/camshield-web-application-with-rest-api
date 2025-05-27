@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-interface UserParams {
+interface RoleParams {
   pagination?: {
     page?: number | undefined;
     totalPages?: number;
@@ -11,30 +11,26 @@ interface UserParams {
   };
   filter?: {
     name?: string;
-    email?: string;
   };
 }
 
 @Injectable({
   providedIn: 'root',
 })
-export class UserService {
-  private baseUrl = 'http://localhost:3001/users/lists';
+export class RolesService {
+  private baseUrl = 'http://localhost:3001/roles/lists';
 
   constructor(private http: HttpClient) {}
 
-  getUsers(params: UserParams): Observable<any> {
+  getRoles(params: RoleParams): Observable<any> {
     const { filter, pagination } = params;
-
     let httpParams = new HttpParams();
+
     if (pagination?.page) {
       httpParams = httpParams.set('page', pagination.page.toString());
     }
     if (filter?.name) {
       httpParams = httpParams.set('name', filter.name);
-    }
-    if (filter?.email) {
-      httpParams = httpParams.set('email', filter.email);
     }
 
     return this.http.get<any>(this.baseUrl, { params: httpParams });

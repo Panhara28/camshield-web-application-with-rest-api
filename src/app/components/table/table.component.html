@@ -38,11 +38,7 @@
             >
               Search
             </button>
-            <button
-              *ngIf="isAnyFilterActive()"
-              class="btn btn-outline-danger"
-              (click)="clearFilters()"
-            >
+            <button class="btn btn-outline-danger" (click)="clearFilters()">
               Clear
             </button>
           </div>
@@ -98,6 +94,11 @@
           </tr>
         </thead>
         <tbody>
+          <tr *ngIf="!hasData">
+            <td [attr.colspan]="headers.length + 2" class="text-center">
+              <app-data-not-found></app-data-not-found>
+            </td>
+          </tr>
           <tr *ngFor="let row of displayedData">
             <td>
               <input

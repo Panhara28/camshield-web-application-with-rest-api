@@ -18,8 +18,8 @@ interface AuthUser {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private readonly apiUrl = 'http://localhost:8080/auth/signin';
-  private readonly meUrl = 'http://localhost:8080/auth/me';
+  private readonly apiUrl = 'http://localhost:3001/auth/signin';
+  private readonly meUrl = 'http://localhost:3001/auth/me';
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
