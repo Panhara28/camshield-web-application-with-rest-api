@@ -4,6 +4,34 @@
       title="User List"
       description="This is will be the description of user list!"
     ></app-page-title>
-    <div class="row"></div>
+    <div class="row">
+      <div class="col-lg-12">
+        <app-table
+          tableTitle="User list"
+          [data]="users"
+          [roles]="roles"
+          [meta]="meta"
+          [pageSize]="meta.limit"
+          [displayFields]="['profilePicture', 'name', 'email', 'role.name']"
+          [imageFields]="['profilePicture']"
+          [headerLabels]="{
+            profilePicture: 'Avatar',
+            name: 'Full Name',
+            email: 'Email Address',
+            'role.name': 'Role',
+          }"
+          [filterFields]="[
+            { key: 'name', label: 'Fullname', type: 'text' },
+            { key: 'email', label: 'Email', type: 'text' },
+            {
+              key: 'roleId',
+              label: 'Role',
+              type: 'select',
+              options: roles
+            }
+          ]"
+        ></app-table>
+      </div>
+    </div>
   </div>
 </app-layouts>

@@ -26,28 +26,24 @@ interface PaginationMeta {
   styleUrl: './dashboards.component.css',
 })
 export class DashboardsComponent {
-  users: any[] = [];
+  users: any = [];
   // meta: any = { page: 1, totalPages: 65, total: 0, limit: 10 };
   meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
-  roles: any[] = [];
+  roles: any = [];
+  roleId: number | null = null;
+  page = 1;
   constructor(
     private userService: UserService,
     private route: ActivatedRoute,
     private RoleService: RolesService
   ) {}
+
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
-      const paramsUserName = params['name'];
-      const paramsUserPage = +params['page'] || 1;
-      this.userService
-        .getUsers({
-          pagination: { page: paramsUserPage },
-          filter: paramsUserName ? { name: paramsUserName } : undefined,
-        })
-        .subscribe((res: any) => {
-          this.users = res.data;
-          this.meta = res.meta;
-        });
+      this.userService.getUsers(params).subscribe((res) => {
+        this.users = res.data;
+        this.meta = res.meta;
+      });
 
       this.RoleService.getRoles({
         pagination: { page: 1 },
@@ -60,18 +56,5 @@ export class DashboardsComponent {
         });
       });
     });
-  }
-
-  onFilterChanged(filters: any): void {
-    const page = 1;
-    this.userService
-      .getUsers({
-        pagination: { page },
-        filter: filters,
-      })
-      .subscribe((res: any) => {
-        this.users = res.data;
-        this.meta = res.meta;
-      });
   }
 }
