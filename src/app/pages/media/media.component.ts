@@ -5,11 +5,13 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MultipleUploadService } from '../../services/multiple-upload.service';
+import { CreateMediaService } from '../../services/create-media.service';
 import { AuthService } from '../../services/auth.service';
+import { MultipleUploadService } from '../../services/multiple-upload.service';
 
 @Component({
   selector: 'app-media',
+  standalone: true,
   imports: [
     LayoutsComponent,
     PageTitleComponent,
@@ -24,9 +26,18 @@ import { AuthService } from '../../services/auth.service';
 export class MediaComponent {
   previewUrls: string[] = [];
   previewFiles: File[] = [];
+  isUploading = false;
+  isUploadButtonDisabled = true;
+  uploadedFiles: {
+    file: File;
+    url: string;
+    filename: string;
+    preview?: string;
+  }[] = [];
 
   constructor(
-    private uploadService: MultipleUploadService,
+    private createMediaService: CreateMediaService,
+    private multipleUploadService: MultipleUploadService,
     private readonly user: AuthService
   ) {}
 
@@ -43,39 +54,79 @@ export class MediaComponent {
     this.handleFiles(event.target.files ?? null);
   }
 
-  private handleFiles(fileList: FileList | null) {
+  private async handleFiles(fileList: FileList | null) {
     if (!fileList) return;
-    Array.from(fileList).forEach((file) => {
+
+    const files = Array.from(fileList);
+    this.previewFiles.push(...files);
+
+    // Generate previews
+    for (let file of files) {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.previewUrls.push(e.target.result);
-          this.previewFiles.push(file);
         };
         reader.readAsDataURL(file);
       }
+    }
+
+    // Upload files to S3
+    this.multipleUploadService.uploadFiles('multiple', files).subscribe({
+      next: async (event: any) => {
+        if (event?.body?.files) {
+          for (let i = 0; i < event.body.files.length; i++) {
+            const file = files[i];
+            const fileData = event.body.files[i];
+            const preview = this.previewUrls[i];
+            this.uploadedFiles.push({
+              file,
+              url: fileData.url,
+              filename: fileData.filename,
+              preview,
+            });
+          }
+        }
+        this.isUploading = true;
+      },
+      error: (err) => console.error('S3 upload error:', err),
     });
   }
 
   removeImage(index: number) {
     this.previewUrls.splice(index, 1);
     this.previewFiles.splice(index, 1);
+    this.uploadedFiles.splice(index, 1);
+
+    if (this.uploadedFiles.length === 0) {
+      this.isUploadButtonDisabled = true;
+    }
   }
 
   onUpload() {
-    this.user.getCurrentUser().subscribe((user) => {
-      for (let file of this.previewFiles) {
-        this.uploadService
-          .uploadImage(file, Number(user?.id))
-          .then((metadata) => {
-            // Assume you upload the file to a server or cloud here and set metadata.url
-            metadata.url = `https://your-storage.com/uploads/${metadata.storedFilename}`;
-            this.uploadService.submitMetadata(metadata).subscribe({
-              next: () => console.log('Upload successful'),
-              error: (err) => console.error('Upload failed', err),
-            });
-          });
-      }
+    this.isUploading = true;
+    this.isUploadButtonDisabled = true;
+    this.user.getCurrentUser().subscribe({
+      next: async (user) => {
+        const uploadedById = Number(user?.id);
+
+        for (let uploaded of this.uploadedFiles) {
+          const metadata = await this.createMediaService.createMedia(
+            uploaded.file,
+            uploadedById
+          );
+          metadata.url = uploaded.url;
+          metadata.storedFilename = uploaded.filename;
+          await this.createMediaService.submitMetadata(metadata).toPromise();
+        }
+
+        console.log('Metadata records submitted.');
+        this.previewUrls = [];
+        this.uploadedFiles = [];
+        this.previewFiles = [];
+        this.isUploading = false;
+      },
+      error: (err) => console.error('User fetch error:', err),
     });
   }
 }
