@@ -21,7 +21,6 @@ interface PaginationMeta {
 })
 export class ListComponent {
   users: any = [];
-  // meta: any = { page: 1, totalPages: 65, total: 0, limit: 10 };
   meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
   roles: any = [];
   roleId: number | null = null;

@@ -1,15 +1,55 @@
 <div class="card p-4">
-  <h5 class="mb-4 fw-semibold">{{ tableTitle }}</h5>
+  <h5 class="mb-3 fw-semibold">{{ tableTitle }}</h5>
   <div class="row">
     <div class="d-flex flex-wrap align-items-center gap-3">
       <div class="col-lg-12">
         <div class="filter-wrapper row">
           <div *ngFor="let field of filterFields" class="form-group col-lg-3">
             <ng-container [ngSwitch]="field.type">
+              <label for="" class="mb-3 mt-4">{{ field.label }}</label>
+              <div *ngSwitchCase="'daterange'">
+                <mat-form-field appearance="outline" class="w-100 custom-range">
+                  <mat-date-range-input
+                    [rangePicker]="picker"
+                    [formGroup]="dateRangeForm"
+                  >
+                    <input
+                      matStartDate
+                      formControlName="start"
+                      placeholder="Start date"
+                    />
+                    <input
+                      matEndDate
+                      formControlName="end"
+                      placeholder="End date"
+                    />
+                  </mat-date-range-input>
+                  <mat-datepicker-toggle
+                    matSuffix
+                    [for]="picker"
+                  ></mat-datepicker-toggle>
+                  <mat-date-range-picker #picker></mat-date-range-picker>
+                </mat-form-field>
+              </div>
+
+              <input
+                *ngSwitchCase="'number'"
+                [type]="field.type"
+                class="form-control"
+                [(ngModel)]="filters[field.key]"
+                [placeholder]="'Search by ' + field.label"
+              />
+              <input
+                *ngSwitchCase="'date'"
+                [type]="field.type"
+                class="form-control"
+                [(ngModel)]="filters[field.key]"
+                [placeholder]="'Search by ' + field.label"
+              />
               <input
                 *ngSwitchCase="'text'"
-                type="text"
-                class="form-control mb-3"
+                [type]="field.type"
+                class="form-control"
                 [(ngModel)]="filters[field.key]"
                 [placeholder]="'Search by ' + field.label"
               />
@@ -33,15 +73,18 @@
           </div>
 
           <div class="form-group col-lg-3">
-            <button
-              class="btn btn-outline-primary me-3"
-              (click)="onFilterChange()"
-            >
-              Search
-            </button>
-            <button class="btn btn-outline-danger" (click)="clearFilters()">
-              Clear
-            </button>
+            <label for="" class="mb-3 mt-4">Actions</label>
+            <div class="form-group">
+              <button
+                class="btn btn-outline-primary me-3"
+                (click)="onFilterChange()"
+              >
+                Search
+              </button>
+              <button class="btn btn-outline-danger" (click)="clearFilters()">
+                Clear
+              </button>
+            </div>
           </div>
         </div>
       </div>

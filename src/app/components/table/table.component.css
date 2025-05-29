@@ -33,3 +33,73 @@
 .form-select {
   padding: 1.1rem 3.375rem 0.875rem 1.125rem !important;
 }
+
+::ng-deep .custom-range .mat-mdc-form-field-infix {
+  padding-top: 7px !important;
+  padding-bottom: 7px !important;
+  min-height: 48px !important; /* or 24px for compact */
+  line-height: 1.8 !important;
+}
+
+/* Optionally adjust font size */
+::ng-deep .custom-range input {
+  font-size: 13px !important;
+  height: 28px;
+  padding: 2px 0px !important;
+}
+
+/* Remove internal margins */
+::ng-deep .custom-range .mat-mdc-form-field-wrapper {
+  padding-bottom: 0 !important;
+  padding-top: 0 !important;
+}
+
+::ng-deep .custom-range .mat-mdc-form-field-infix {
+  display: flex;
+  align-items: center;
+  padding: 4px 0px !important;
+  min-height: 36px;
+  gap: 8px;
+}
+
+::ng-deep .custom-range .mat-date-range-input-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+::ng-deep .custom-range .mat-date-range-input-separator {
+  padding: 0 4px;
+  font-weight: 500;
+  color: #666;
+}
+
+::ng-deep .custom-range .mat-date-range-input-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  width: 100%;
+}
+
+::ng-deep .custom-range input[matStartDate],
+::ng-deep .custom-range input[matEndDate] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 2px 6px !important;
+  box-sizing: border-box;
+}
+
+::ng-deep .filter-wrapper .form-group {
+  line-height: 0 !important;
+}
+
+::ng-deep input[matStartDate],
+::ng-deep input[matEndDate] {
+  pointer-events: none;
+  caret-color: transparent;
+  background-color: #fff;
+  user-select: none;
+}

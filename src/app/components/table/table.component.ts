@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
@@ -7,21 +8,39 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DataNotFoundComponent } from '../data-not-found/data-not-found.component';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { provideNativeDateAdapter } from '@angular/material/core';
 
 interface FilterField {
   key: string;
   label: string;
-  type?: 'text' | 'select';
+  type?: 'text' | 'select' | 'date' | 'number' | 'daterange';
   options?: { label: string; value: any }[];
 }
 
 @Component({
   selector: 'app-table',
-  imports: [FormsModule, CommonModule, DataNotFoundComponent],
+  imports: [
+    FormsModule,
+    CommonModule,
+    DataNotFoundComponent,
+    MatFormFieldModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './table.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideNativeDateAdapter()],
+
   styleUrl: './table.component.css',
 })
 export class TableComponent implements OnChanges {
@@ -36,6 +55,8 @@ export class TableComponent implements OnChanges {
   @Output() searchChanged = new EventEmitter<string>();
   @Input() filterFields: FilterField[] = [];
   @Output() filterChanged = new EventEmitter<any>();
+  @Input() autoApply: boolean = false;
+  dateRangeForm: FormGroup;
 
   filters: { [key: string]: string } = {};
   filteredData: any[] = [];
@@ -45,9 +66,21 @@ export class TableComponent implements OnChanges {
   allSelected: boolean = false;
 
   currentPage: number = 1;
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private fb: FormBuilder
+  ) {
+    this.dateRangeForm = this.fb.group({
+      start: [null],
+      end: [null],
+    });
+  }
 
   ngOnInit(): void {
+    this.dateRangeForm.valueChanges.subscribe((value) => {
+      this.filters['dateRange'] = value;
+    });
     this.route.queryParams.subscribe((params) => {
       this.filters = {};
       this.filterFields.forEach((field) => {
@@ -125,13 +158,25 @@ export class TableComponent implements OnChanges {
   onFilterChange() {
     const queryParams: any = { page: 1 };
 
-    // Set query only for non-empty filters
     for (const key of Object.keys(this.filters)) {
-      const value = this.filters[key];
-      if (value !== undefined && value !== null && value !== '') {
+      const value: any = this.filters[key];
+
+      if (
+        key === 'dateRange' &&
+        typeof value === 'object' &&
+        value !== null &&
+        value.start &&
+        value.end
+      ) {
+        queryParams['startDate'] = this.formatDate(value.start);
+        queryParams['endDate'] = this.formatDate(value.end);
+      } else if (
+        key !== 'dateRange' &&
+        value !== undefined &&
+        value !== null &&
+        value !== ''
+      ) {
         queryParams[key] = value;
-      } else {
-        queryParams[key] = null; // This removes the param from URL
       }
     }
 
@@ -152,15 +197,28 @@ export class TableComponent implements OnChanges {
   clearFilters() {
     this.filters = {};
     const clearParams: any = { page: 1 };
-    for (const field of this.filterFields) {
-      clearParams[field.key] = null;
+
+    // Also clear date range form
+    if (this.dateRangeForm) {
+      this.dateRangeForm.reset();
     }
+
+    for (const field of this.filterFields) {
+      if (field.type === 'daterange') {
+        clearParams['startDate'] = null;
+        clearParams['endDate'] = null;
+      } else {
+        clearParams[field.key] = null;
+      }
+    }
+
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: clearParams,
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+
     this.emitFilters();
   }
 
@@ -211,5 +269,10 @@ export class TableComponent implements OnChanges {
   }
   onView(arg0: any) {
     throw new Error('Method not implemented.');
+  }
+
+  formatDate(date: Date): string {
+    const d = new Date(date);
+    return d.toISOString().split('T')[0]; // format: YYYY-MM-DD
   }
 }
