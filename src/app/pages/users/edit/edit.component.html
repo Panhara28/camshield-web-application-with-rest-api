@@ -1,1 +1,81 @@
-<p>edit works!</p>
+<app-layouts>
+  <div class="container-xl px-4">
+    <app-page-title
+      title="User List"
+      description="This is will be the description of user list!"
+    ></app-page-title>
+    <div class="row">
+      <div class="col-lg-12">
+        <mat-tab-group>
+          <mat-tab label="Profile">
+            <div class="row mt-3" style="width: 100%">
+              <div class="col-xl-4">
+                <div class="card mb-4 mb-xl-0">
+                  <div class="card-header">Profile Pictures</div>
+                  <div class="card-body text-center">
+                    <div
+                      class="profile-image-wrapper position-relative d-inline-block"
+                    >
+                      <img
+                        *ngIf="editForm.get('profilePicture')?.value"
+                        [src]="editForm.get('profilePicture')?.value"
+                        alt="Profile"
+                        class="profile-picture rounded-circle shadow-sm object-fit-cover"
+                      />
+                      <div
+                        class="spinner-border text-primary position-absolute top-50 start-50 translate-middle"
+                        *ngIf="isUploading"
+                        role="status"
+                        style="width: 2rem; height: 2rem"
+                      >
+                        <span class="visually-hidden">Uploading...</span>
+                      </div>
+                    </div>
+                    <div class="small font-italic text-muted mb-4">
+                      JPG or PNG no larger than 5 MB
+                    </div>
+                    <input
+                      type="file"
+                      class="form-control"
+                      (change)="onFileSelected($event)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-8">
+                <div class="card mb-4">
+                  <div class="card-header">Account Details</div>
+                  <div class="card-body">
+                    <form [formGroup]="editForm">
+                      <div class="mb-3">
+                        <label class="small mb-1" for="inputName">Name</label>
+                        <input
+                          class="form-control"
+                          id="inputName"
+                          type="text"
+                          formControlName="name"
+                          placeholder="Enter your name"
+                        />
+                      </div>
+                    </form>
+
+                    <button
+                      class="btn btn-primary"
+                      type="button"
+                      (click)="onSaveChanges()"
+                    >
+                      Save changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+          <mat-tab label="Role & Permission"> Content 2 </mat-tab>
+          <mat-tab label="Security"> Content 2 </mat-tab>
+          <mat-tab label="Logs"> Content 3 </mat-tab>
+        </mat-tab-group>
+      </div>
+    </div>
+  </div>
+</app-layouts>

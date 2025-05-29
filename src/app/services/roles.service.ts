@@ -18,7 +18,7 @@ interface RoleParams {
   providedIn: 'root',
 })
 export class RolesService {
-  private baseUrl = 'http://localhost:3001/roles/lists';
+  private baseUrl = 'http://localhost:8080/roles/lists';
 
   constructor(private http: HttpClient) {}
 

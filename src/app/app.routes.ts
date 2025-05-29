@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { LoginGuard } from './guards/login.guard';
 import { ListComponent } from './pages/users/list/list.component';
+import { EditComponent } from './pages/users/edit/edit.component';
 
 export const routes: Routes = [
   {
@@ -30,7 +31,17 @@ export const routes: Routes = [
         path: 'lists',
         component: ListComponent,
       },
+      {
+        path: ':id/edit',
+        component: EditComponent,
+      },
     ],
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'media',
+    loadComponent: () =>
+      import('./pages/media/media.component').then((m) => m.MediaComponent),
     canActivate: [AuthGuard],
   },
 ];
