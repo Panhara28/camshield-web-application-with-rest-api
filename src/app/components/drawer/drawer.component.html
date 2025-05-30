@@ -1,0 +1,95 @@
+<div
+  class="overlay"
+  *ngIf="isDrawerOpen"
+  (click)="closeDrawerOnOutsideClick($event)"
+>
+  <div
+    id="rightDrawer"
+    [class.show]="isDrawerOpen"
+    (click)="$event.stopPropagation()"
+  >
+    <div>
+      <h5>Attachment Detail</h5>
+    </div>
+    <div class="d-flex">
+      <div>
+        <img
+          [src]="media.url"
+          [alt]="media.altText"
+          style="width: 150px; height: 150px"
+        />
+      </div>
+      <div class="image-info ms-2">
+        <p
+          style="
+            font-size: 14px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 5px;
+          "
+        >
+          Filename: {{ media.filename }}
+        </p>
+        <p style="font-size: 14px; margin-bottom: 5px">
+          Date: {{ media.createdAt }}
+        </p>
+        <p style="font-size: 14px; margin-bottom: 5px">
+          Size: {{ media.width }} x {{ media.height }}
+        </p>
+        <button class="btn btn-danger btn-sm mt-2" style="width: 100%">
+          Delete Permanently
+        </button>
+      </div>
+    </div>
+
+    <hr />
+    <div class="row g-3 align-items-center justify-content-end">
+      <div class="col-auto">
+        <label for="inputPassword6" class="col-form-label">Filename</label>
+      </div>
+      <div class="col-auto">
+        <input
+          type="text"
+          id="inputPassword6"
+          class="form-control"
+          aria-describedby="passwordHelpInline"
+          [value]="media.filename"
+        />
+      </div>
+    </div>
+    <div class="row g-3 align-items-center justify-content-end mt-2">
+      <div class="col-auto">
+        <label for="inputPassword6" class="col-form-label">Alt text</label>
+      </div>
+      <div class="col-auto">
+        <input
+          type="text"
+          id="inputPassword6"
+          class="form-control"
+          aria-describedby="passwordHelpInline"
+          [value]="media.altText"
+        />
+      </div>
+    </div>
+    <div class="row g-3 align-items-center justify-content-end mt-2">
+      <div class="col-auto">
+        <label for="inputPassword6" class="col-form-label">Description</label>
+      </div>
+      <div class="col-auto">
+        <textarea
+          id="inputPassword6"
+          class="form-control"
+          aria-describedby="passwordHelpInline"
+          [value]="media.description"
+        >
+        </textarea>
+      </div>
+    </div>
+    <button class="btn btn-danger btn-sm" (click)="toggleDrawer()">
+      Close
+    </button>
+  </div>
+</div>

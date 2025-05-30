@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { LayoutsComponent } from '../../components/layouts/layouts.component';
 import { PageTitleComponent } from '../../components/page-title/page-title.component';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -11,6 +11,7 @@ import { MultipleUploadService } from '../../services/multiple-upload.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MediaService } from '../../services/medias.service';
 import { ActivatedRoute } from '@angular/router';
+import { DrawerComponent } from '../../components/drawer/drawer.component';
 
 interface PaginationMeta {
   page?: number;
@@ -29,6 +30,7 @@ interface PaginationMeta {
     MatIconModule,
     CommonModule,
     MatCardModule,
+    DrawerComponent,
   ],
   templateUrl: './media.component.html',
   styleUrl: './media.component.css',
@@ -39,7 +41,9 @@ export class MediaComponent {
   isUploading = false;
   isUploadButtonDisabled = true;
   medias: any = [];
+  media: any = undefined;
   meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
+  @ViewChild(DrawerComponent) drawer!: DrawerComponent;
 
   uploadedFiles: {
     file: File;
@@ -64,6 +68,11 @@ export class MediaComponent {
         this.meta = res.meta;
       });
     });
+  }
+
+  openDrawerFromParent(media: any): void {
+    this.media = media;
+    this.drawer.toggleDrawer(media);
   }
 
   onFileDropped(event: DragEvent) {

@@ -15,6 +15,8 @@
                     <mat-card
                       class="example-card w-100 p-2"
                       appearance="outlined"
+                      (click)="openDrawerFromParent(media)"
+                      style="cursor: pointer"
                     >
                       <div
                         style="
@@ -113,4 +115,5 @@
       </div>
     </div>
   </div>
+  <app-drawer [media]="media"></app-drawer>
 </app-layouts>
