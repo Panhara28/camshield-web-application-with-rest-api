@@ -14,3 +14,9 @@ html {
     density: 0,
   ));
 }
+:root {
+  @include mat.snack-bar-overrides((
+    button-color: #fff,
+    container-color: #0f5132,
+  ));
+}

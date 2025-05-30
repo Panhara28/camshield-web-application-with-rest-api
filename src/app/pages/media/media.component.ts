@@ -8,6 +8,16 @@ import { MatCardModule } from '@angular/material/card';
 import { CreateMediaService } from '../../services/create-media.service';
 import { AuthService } from '../../services/auth.service';
 import { MultipleUploadService } from '../../services/multiple-upload.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MediaService } from '../../services/medias.service';
+import { ActivatedRoute } from '@angular/router';
+
+interface PaginationMeta {
+  page?: number;
+  totalPages?: number;
+  total?: number;
+  limit?: number;
+}
 
 @Component({
   selector: 'app-media',
@@ -28,6 +38,9 @@ export class MediaComponent {
   previewFiles: File[] = [];
   isUploading = false;
   isUploadButtonDisabled = true;
+  medias: any = [];
+  meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
+
   uploadedFiles: {
     file: File;
     url: string;
@@ -38,8 +51,20 @@ export class MediaComponent {
   constructor(
     private createMediaService: CreateMediaService,
     private multipleUploadService: MultipleUploadService,
-    private readonly user: AuthService
+    private readonly user: AuthService,
+    private snackBar: MatSnackBar,
+    private mediaService: MediaService,
+    private route: ActivatedRoute
   ) {}
+
+  ngOnInit() {
+    this.route.queryParams.subscribe((params) => {
+      this.mediaService.getMedias(params).subscribe((res) => {
+        this.medias = res.data;
+        this.meta = res.meta;
+      });
+    });
+  }
 
   onFileDropped(event: DragEvent) {
     event.preventDefault();
@@ -74,10 +99,10 @@ export class MediaComponent {
     // Upload files to S3
     this.multipleUploadService.uploadFiles('multiple', files).subscribe({
       next: async (event: any) => {
-        if (event?.body?.files) {
-          for (let i = 0; i < event.body.files.length; i++) {
+        if (event?.body !== undefined) {
+          for (let i = 0; i < event?.body?.length; i++) {
             const file = files[i];
-            const fileData = event.body.files[i];
+            const fileData = event.body[i];
             const preview = this.previewUrls[i];
             this.uploadedFiles.push({
               file,
@@ -92,7 +117,6 @@ export class MediaComponent {
       error: (err) => console.error('S3 upload error:', err),
     });
   }
-
   removeImage(index: number) {
     this.previewUrls.splice(index, 1);
     this.previewFiles.splice(index, 1);
@@ -100,6 +124,7 @@ export class MediaComponent {
 
     if (this.uploadedFiles.length === 0) {
       this.isUploadButtonDisabled = true;
+      this.isUploading = false;
     }
   }
 
@@ -119,8 +144,13 @@ export class MediaComponent {
           metadata.storedFilename = uploaded.filename;
           await this.createMediaService.submitMetadata(metadata).toPromise();
         }
-
-        console.log('Metadata records submitted.');
+        this.snackBar.open('Images metadata successfully submitted.', 'Close', {
+          duration: 5000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom',
+          panelClass: ['custom-snackbar-success'],
+        });
+        this.isUploading = false;
         this.previewUrls = [];
         this.uploadedFiles = [];
         this.previewFiles = [];

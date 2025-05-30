@@ -19,14 +19,13 @@ export class CreateMediaService {
           const data = {
             filename: file.name,
             storedFilename: this.generateStoredFilename(file.name),
-            url: '', // to be updated after storing the file to storage
             type: file.type.startsWith('image/') ? 'IMAGE' : 'OTHER',
             mimetype: file.type,
             extension: this.getFileExtension(file.name),
             size: file.size,
-            title: '',
-            altText: '',
-            description: '',
+            title: this.generateStoredFilename(file.name),
+            altText: this.generateStoredFilename(file.name),
+            description: file.name,
             uploadedById: uploadedById,
             width: image.width,
             height: image.height,

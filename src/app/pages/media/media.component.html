@@ -9,6 +9,50 @@
         <div class="card">
           <div class="card-body">
             <mat-tab-group>
+              <mat-tab label="Libraries">
+                <div class="row" style="width: 100%">
+                  <div class="col-lg-2 mt-4 mb-4" *ngFor="let media of medias">
+                    <mat-card
+                      class="example-card w-100 p-2"
+                      appearance="outlined"
+                    >
+                      <div
+                        style="
+                          height: 140px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          overflow: hidden;
+                        "
+                      >
+                        <img
+                          mat-card-image
+                          [src]="media.url"
+                          [alt]="media.altText"
+                          style="
+                            max-height: 100%;
+                            max-width: 100%;
+                            object-fit: contain;
+                          "
+                        />
+                      </div>
+                      <mat-card-actions class="p-0 justify-content-center">
+                        <p
+                          style="
+                            display: -webkit-box;
+                            -webkit-line-clamp: 2;
+                            -webkit-box-orient: vertical;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                          "
+                        >
+                          Filename: {{ media.filename }}
+                        </p>
+                      </mat-card-actions>
+                    </mat-card>
+                  </div>
+                </div>
+              </mat-tab>
               <mat-tab label="Upload">
                 <div
                   class="drop-zone text-center mt-4"
@@ -51,32 +95,17 @@
                   <button
                     class="btn btn-primary"
                     (click)="onUpload()"
-                    [disabled]="!isUploading"
+                    [disabled]="!isUploading || previewFiles.length === 0"
                   >
                     <span
-                      *ngIf="isUploading"
+                      *ngIf="isUploading && previewFiles.length === 0"
                       class="spinner-border spinner-border-sm me-2"
                     ></span>
-                    Upload Images {{ isUploading }}
+                    Upload Images
                   </button>
                 </div>
               </mat-tab>
-              <mat-tab label="Libraries">
-                <div class="row" style="width: 100%">
-                  <div class="col-lg-2 mt-4 mb-4">
-                    <mat-card class="example-card" appearance="outlined">
-                      <img
-                        mat-card-image
-                        src="https://material.angular.dev/assets/img/examples/shiba2.jpg"
-                        alt="Photo of a Shiba Inu"
-                      />
-                      <mat-card-actions>
-                        <p>Name of image: 1.png</p>
-                      </mat-card-actions>
-                    </mat-card>
-                  </div>
-                </div>
-              </mat-tab>
+
               <mat-tab label="Third"> Content 3 </mat-tab>
             </mat-tab-group>
           </div>

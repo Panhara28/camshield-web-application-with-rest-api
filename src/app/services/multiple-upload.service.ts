@@ -14,7 +14,6 @@ export class MultipleUploadService {
     const formData: FormData = new FormData();
     formData.append('folder', folder);
     files.forEach((file) => formData.append('files', file));
-    console.log(formData);
     const req = new HttpRequest('POST', this.fileUploadUrl, formData, {
       reportProgress: true,
     });
