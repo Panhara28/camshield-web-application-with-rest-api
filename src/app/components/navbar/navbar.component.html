@@ -76,6 +76,49 @@
           </div>
           Dashboard
         </a>
+        <a
+        class="nav-link collapsed"
+        href="javascript:void(0);"
+        data-bs-toggle="collapse"
+        data-bs-target="#collapseDashboards"
+        aria-expanded="false"
+        aria-controls="collapseDashboards"
+      >
+        <div class="nav-link-icon">
+          <i class="fas fa-users" style="font-size: 20px"></i>
+        </div>
+        Product
+        <div class="sidenav-collapse-arrow">
+          <i class="fas fa-angle-down"></i>
+        </div>
+      </a>
+      <div
+        class="collapse"
+        id="collapseDashboards"
+        data-bs-parent="#accordionSidenav"
+      >
+        <nav
+          class="sidenav-menu-nested nav accordion"
+          id="accordionSidenavPages"
+        >
+          <a
+            class="nav-link"
+            routerLink="/products/lists"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            Lists
+          </a>
+          <a
+            class="nav-link"
+            routerLink="/products/create"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            Create Product
+          </a>
+        </nav>
+      </div>
         <div class="sidenav-menu-heading">Settings</div>
         <a
           class="nav-link collapsed"

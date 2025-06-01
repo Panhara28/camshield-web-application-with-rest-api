@@ -44,4 +44,25 @@ export const routes: Routes = [
       import('./pages/media/media.component').then((m) => m.MediaComponent),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'products',
+    children: [
+      {
+        path: 'lists',
+        loadComponent: () =>
+          import('./pages/products/product-list/product-list.component').then(
+            (m) => m.ProductListComponent
+          ),
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'create',
+        loadComponent: () =>
+          import(
+            './pages/products/create-product/create-product.component'
+          ).then((m) => m.CreateProductComponent),
+        canActivate: [AuthGuard],
+      },
+    ],
+  },
 ];
