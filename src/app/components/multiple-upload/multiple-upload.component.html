@@ -1,52 +1,168 @@
-<div>
-  <div
-    class="drop-zone text-center mt-4"
-    (dragover)="onDragOver($event)"
-    (drop)="onFileDropped($event)"
-    (click)="fileInput.click()"
-  >
-    Drag & Drop Images Here or Click to Upload
-    <input
-      type="file"
-      #fileInput
-      (change)="onFileSelected($event)"
-      accept="image/*"
-      multiple
-      hidden
-    />
-  </div>
-
-  <div class="preview-container d-flex flex-wrap mt-3">
-    <div
-      *ngFor="let url of previewUrls; let i = index"
-      class="position-relative m-1"
-    >
-      <img
-        [src]="url"
-        class="img-thumbnail object-fit-cover"
-        style="max-width: 100px; height: 100px"
-      />
-      <i
-        type="button"
-        class="fa fa-remove position-absolute top-0 end-0 bg-danger p-2 text-white text-center"
-        style="border-radius: 20px; width: 30px; height: 30px"
-        aria-label="Remove"
-        (click)="removeImage(i)"
-      ></i>
-    </div>
-  </div>
-
-  <div class="mt-3 text-center">
+<!-- ✅ Default upload/select zone -->
+<div
+  *ngIf="allMediaUrls.length === 0"
+  class="border rounded-3 text-center py-5 px-4"
+  style="border-style: solid; border-color: #e5e7eb"
+>
+  <div class="d-inline-flex align-items-center gap-3">
     <button
-      class="btn btn-primary"
-      (click)="onUpload()"
-      [disabled]="!isUploading || previewFiles.length === 0"
+      class="btn btn-outline-primary btn-sm"
+      (click)="triggerMainUpload()"
     >
-      <span
-        *ngIf="isUploading && previewFiles.length === 0"
-        class="spinner-border spinner-border-sm me-2"
-      ></span>
-      Upload Images
+      Upload new
     </button>
+    <button
+      class="btn btn-link btn-sm text-decoration-none fw-semibold"
+      data-bs-toggle="modal"
+      data-bs-target="#mediaModal"
+    >
+      Select existing
+    </button>
+  </div>
+  <p class="text-muted mt-2 mb-0">Accepts images, videos, or 3D models</p>
+  <input
+    type="file"
+    #fileInputRef
+    (change)="onFileSelected($event)"
+    multiple
+    hidden
+  />
+</div>
+
+<!-- Media display list (after upload/selection) -->
+<div class="d-flex flex-wrap gap-3 mt-2" *ngIf="allMediaUrls.length > 0">
+  <div
+    class="border rounded-3 overflow-hidden"
+    style="width: 120px; height: 120px"
+    *ngFor="let url of allMediaUrls"
+  >
+    <img [src]="url" class="w-100 h-100 object-fit-cover" />
+  </div>
+
+  <!-- Plus button to add more -->
+  <div
+    class="d-flex justify-content-center align-items-center border rounded-3 border-secondary-subtle"
+    style="
+      width: 120px;
+      height: 120px;
+      cursor: pointer;
+      border-style: dashed;
+      background-color: #f9f9f9;
+    "
+    data-bs-toggle="modal"
+    data-bs-target="#mediaModal"
+  >
+    <span class="fs-2 fw-light">+</span>
+  </div>
+</div>
+
+<!-- Upload Button -->
+<div class="text-end mt-3" *ngIf="previewUrls.length > 0">
+  <button
+    class="btn btn-success"
+    [disabled]="!isUploading"
+    (click)="onUpload()"
+  >
+    Upload Images
+  </button>
+</div>
+
+<!-- Modal: Select existing -->
+<div
+  class="modal fade"
+  #mediaModal
+  id="mediaModal"
+  tabindex="-1"
+  aria-labelledby="mediaModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Select file</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Filters -->
+        <div
+          class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-3"
+        >
+          <input
+            type="text"
+            class="form-control flex-grow-1"
+            style="max-width: 400px"
+            placeholder="Search files"
+          />
+          <div class="btn-group gap-1">
+            <button class="btn btn-outline-secondary btn-sm">File type</button>
+            <button class="btn btn-outline-secondary btn-sm">File size</button>
+            <button class="btn btn-outline-secondary btn-sm">Used in</button>
+            <button class="btn btn-outline-secondary btn-sm">Product</button>
+          </div>
+        </div>
+
+        <!-- Add media buttons -->
+        <div class="text-center my-4">
+          <input
+            type="file"
+            #modalFileInput
+            (change)="onModalFileSelected($event)"
+            multiple
+            hidden
+          />
+          <button
+            class="btn btn-outline-primary btn-sm me-2"
+            (click)="modalFileInput.click()"
+          >
+            Add media
+          </button>
+          <p class="text-muted mt-2 mb-0">
+            Drag and drop images, videos, 3D models, and files
+          </p>
+        </div>
+
+        <div class="media-grid mt-4">
+          <div
+            class="media-card position-relative"
+            *ngFor="let media of medias"
+            (click)="toggleMediaSelection(media.url)"
+            [class.border-primary]="isSelectedMedia(media.url)"
+            style="cursor: pointer"
+          >
+            <img [src]="media.url" alt="media preview" />
+            <div class="caption">{{ media.filename }}</div>
+
+            <input
+              type="checkbox"
+              class="form-check-input position-absolute"
+              style="top: 6px; left: 6px"
+              [checked]="isSelectedMedia(media.url)"
+              (click)="
+                $event.stopPropagation(); toggleMediaSelection(media.url)
+              "
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary btn-sm"
+          data-bs-dismiss="modal"
+          (click)="onModalConfirmSelection()"
+        >
+          Done
+        </button>
+      </div>
+    </div>
   </div>
 </div>

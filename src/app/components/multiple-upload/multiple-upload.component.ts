@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { PageTitleComponent } from '../page-title/page-title.component';
 import { CommonModule } from '@angular/common';
 import { CreateMediaService } from '../../services/create-media.service';
@@ -30,6 +30,12 @@ export class MultipleUploadComponent {
   medias: any = [];
   media: any = undefined;
   meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
+  selectedMediaUrls: Set<string> = new Set();
+  @ViewChild('mediaModal') mediaModalRef!: ElementRef;
+  @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
+
+  confirmedMediaUrls: string[] = [];
+  selectedConfirmedUrls: Set<string> = new Set();
 
   uploadedFiles: {
     file: File;
@@ -46,6 +52,13 @@ export class MultipleUploadComponent {
     private route: ActivatedRoute,
     private snackBar: MatSnackBar
   ) {}
+
+  ngAfterViewInit() {
+    const modalEl = this.mediaModalRef.nativeElement;
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      this.selectedMediaUrls.clear(); // ✅ Clear state
+    });
+  }
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
@@ -148,5 +161,79 @@ export class MultipleUploadComponent {
       },
       error: (err) => console.error('User fetch error:', err),
     });
+  }
+
+  isSelectedMedia(url: string): boolean {
+    return this.selectedMediaUrls.has(url);
+  }
+
+  toggleMediaSelection(url: string) {
+    if (this.selectedMediaUrls.has(url)) {
+      this.selectedMediaUrls.delete(url);
+    } else {
+      this.selectedMediaUrls.add(url);
+    }
+  }
+
+  onModalFileSelected(event: any) {
+    const files: FileList | null = event.target.files;
+    if (!files) return;
+
+    const uploadFiles = Array.from(files);
+
+    this.multipleUploadService.uploadFiles('multiple', uploadFiles).subscribe({
+      next: (event: any) => {
+        if (event?.body !== undefined) {
+          for (let i = 0; i < event.body.length; i++) {
+            const fileData = event.body[i];
+            const newMedia = {
+              url: fileData.url,
+              filename: fileData.filename,
+              mimeType: fileData.mimeType || 'image/png',
+            };
+            this.medias.unshift(newMedia);
+            this.selectedMediaUrls.add(newMedia.url); // ✅ pre-select uploaded image
+          }
+        }
+      },
+      error: (err) => console.error('Modal upload error:', err),
+    });
+  }
+
+  onModalConfirmSelection() {
+    this.confirmedMediaUrls = Array.from(this.selectedMediaUrls);
+    this.selectedMediaUrls.clear(); // Reset after confirmation
+  }
+
+  get allMediaUrls(): string[] {
+    const uploaded = this.uploadedFiles.map((f) => f.url);
+    return [...uploaded, ...this.confirmedMediaUrls];
+  }
+
+  triggerMainUpload() {
+    this.fileInputRef.nativeElement.click();
+  }
+
+  get selectedCount(): number {
+    return this.selectedConfirmedUrls.size;
+  }
+
+  toggleSelected(url: string) {
+    if (this.selectedConfirmedUrls.has(url)) {
+      this.selectedConfirmedUrls.delete(url);
+    } else {
+      this.selectedConfirmedUrls.add(url);
+    }
+  }
+
+  isChecked(url: string): boolean {
+    return this.selectedConfirmedUrls.has(url);
+  }
+
+  removeSelected() {
+    this.confirmedMediaUrls = this.confirmedMediaUrls.filter(
+      (url) => !this.selectedConfirmedUrls.has(url)
+    );
+    this.selectedConfirmedUrls.clear();
   }
 }
