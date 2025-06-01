@@ -1,0 +1,25 @@
+.drop-zone {
+    border: 2px dashed #6c757d;
+    border-radius: 10px;
+    padding: 100px;
+    text-align: center;
+    color: #6c757d;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.drop-zone.dragover {
+    background-color: #e9ecef;
+}
+
+.preview-container img {
+    max-width: 100px;
+    margin: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+}

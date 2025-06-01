@@ -1,0 +1,52 @@
+<div>
+  <div
+    class="drop-zone text-center mt-4"
+    (dragover)="onDragOver($event)"
+    (drop)="onFileDropped($event)"
+    (click)="fileInput.click()"
+  >
+    Drag & Drop Images Here or Click to Upload
+    <input
+      type="file"
+      #fileInput
+      (change)="onFileSelected($event)"
+      accept="image/*"
+      multiple
+      hidden
+    />
+  </div>
+
+  <div class="preview-container d-flex flex-wrap mt-3">
+    <div
+      *ngFor="let url of previewUrls; let i = index"
+      class="position-relative m-1"
+    >
+      <img
+        [src]="url"
+        class="img-thumbnail object-fit-cover"
+        style="max-width: 100px; height: 100px"
+      />
+      <i
+        type="button"
+        class="fa fa-remove position-absolute top-0 end-0 bg-danger p-2 text-white text-center"
+        style="border-radius: 20px; width: 30px; height: 30px"
+        aria-label="Remove"
+        (click)="removeImage(i)"
+      ></i>
+    </div>
+  </div>
+
+  <div class="mt-3 text-center">
+    <button
+      class="btn btn-primary"
+      (click)="onUpload()"
+      [disabled]="!isUploading || previewFiles.length === 0"
+    >
+      <span
+        *ngIf="isUploading && previewFiles.length === 0"
+        class="spinner-border spinner-border-sm me-2"
+      ></span>
+      Upload Images
+    </button>
+  </div>
+</div>

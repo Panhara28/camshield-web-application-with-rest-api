@@ -3,6 +3,8 @@ import { LayoutsComponent } from '../../../components/layouts/layouts.component'
 import { PageTitleComponent } from '../../../components/page-title/page-title.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { QuillModule } from 'ngx-quill';
+import { MultipleUploadComponent } from '../../../components/multiple-upload/multiple-upload.component';
 
 @Component({
   selector: 'app-create-product',
@@ -12,6 +14,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
+    QuillModule,
+    MultipleUploadComponent,
   ],
   templateUrl: './create-product.component.html',
   styleUrl: './create-product.component.css',
