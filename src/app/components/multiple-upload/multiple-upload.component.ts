@@ -1,5 +1,4 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { PageTitleComponent } from '../page-title/page-title.component';
 import { CommonModule } from '@angular/common';
 import { CreateMediaService } from '../../services/create-media.service';
 import { MultipleUploadService } from '../../services/multiple-upload.service';
@@ -56,7 +55,7 @@ export class MultipleUploadComponent {
   ngAfterViewInit() {
     const modalEl = this.mediaModalRef.nativeElement;
     modalEl.addEventListener('hidden.bs.modal', () => {
-      this.selectedMediaUrls.clear(); // ✅ Clear state
+      // this.selectedMediaUrls.clear(); // Just clear selection, not uploaded media
     });
   }
 
@@ -79,7 +78,52 @@ export class MultipleUploadComponent {
   }
 
   onFileSelected(event: any) {
-    this.handleFiles(event.target.files ?? null);
+    const files = event.target.files as FileList;
+    if (!files) return;
+
+    const uploadFiles: File[] = Array.from(files); // ✅ Fix typing here
+
+    this.previewFiles.push(...uploadFiles);
+
+    for (let file of uploadFiles) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.previewUrls.push(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    this.multipleUploadService.uploadFiles('multiple', uploadFiles).subscribe({
+      next: (event: any) => {
+        if (event?.body !== undefined) {
+          for (let i = 0; i < event.body.length; i++) {
+            const file = uploadFiles[i];
+            const fileData = event.body[i];
+            const preview = this.previewUrls[i];
+            const uploaded = {
+              file,
+              url: fileData.url,
+              filename: fileData.filename,
+              preview,
+            };
+
+            this.uploadedFiles.push(uploaded);
+
+            const newMedia = {
+              url: fileData.url,
+              filename: fileData.filename,
+              mimeType: fileData.mimeType || 'image/png',
+            };
+            this.medias.unshift(newMedia);
+            this.selectedMediaUrls.add(newMedia.url);
+          }
+          this.isUploading = true;
+        }
+      },
+      error: (err) => console.error('Upload error:', err),
+    });
   }
 
   private async handleFiles(fileList: FileList | null) {
@@ -185,14 +229,32 @@ export class MultipleUploadComponent {
       next: (event: any) => {
         if (event?.body !== undefined) {
           for (let i = 0; i < event.body.length; i++) {
+            const file = uploadFiles[i];
             const fileData = event.body[i];
-            const newMedia = {
-              url: fileData.url,
-              filename: fileData.filename,
-              mimeType: fileData.mimeType || 'image/png',
+            const reader = new FileReader();
+
+            reader.onload = (e: any) => {
+              const preview = e.target.result;
+
+              const uploaded = {
+                file,
+                url: fileData.url,
+                filename: fileData.filename,
+                preview,
+              };
+
+              this.uploadedFiles.push(uploaded);
+
+              const newMedia = {
+                url: fileData.url,
+                filename: fileData.filename,
+                mimeType: fileData.mimeType || 'image/png',
+              };
+              this.medias.unshift(newMedia);
+              // ✅ Do NOT add to tempSelectedMediaUrls (remove selection binding)
             };
-            this.medias.unshift(newMedia);
-            this.selectedMediaUrls.add(newMedia.url); // ✅ pre-select uploaded image
+
+            reader.readAsDataURL(file);
           }
         }
       },
@@ -202,7 +264,6 @@ export class MultipleUploadComponent {
 
   onModalConfirmSelection() {
     this.confirmedMediaUrls = Array.from(this.selectedMediaUrls);
-    this.selectedMediaUrls.clear(); // Reset after confirmation
   }
 
   get allMediaUrls(): string[] {
