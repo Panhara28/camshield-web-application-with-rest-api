@@ -28,11 +28,11 @@ export class MultipleUploadComponent {
   isUploadButtonDisabled = true;
   medias: any = [];
   media: any = undefined;
-  meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
+  meta: PaginationMeta = { page: 1, limit: 20, totalPages: 1, total: 0 };
   selectedMediaUrls: Set<string> = new Set();
-  // @ViewChild('mediaModal') mediaModalRef!: ElementRef;
   @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
-
+  maxThumbnails = 6;
+  isExpanded = false;
   confirmedMediaUrls: Set<string> = new Set();
   selectedConfirmedUrls: Set<string> = new Set();
 
@@ -51,13 +51,6 @@ export class MultipleUploadComponent {
     private route: ActivatedRoute,
     private snackBar: MatSnackBar
   ) {}
-
-  ngAfterViewInit() {
-    // const modalEl = this.mediaModalRef.nativeElement;
-    // modalEl.addEventListener('hidden.bs.modal', () => {
-    //   // this.selectedMediaUrls.clear(); // Just clear selection, not uploaded media
-    // });
-  }
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
@@ -293,5 +286,48 @@ export class MultipleUploadComponent {
 
   isChecked(url: string): boolean {
     return this.selectedConfirmedUrls.has(url);
+  }
+
+  getFirstConfirmedUrl(): string {
+    for (const media of this.medias) {
+      if (this.confirmedMediaUrls.has(media.url)) {
+        return media.url;
+      }
+    }
+    return '';
+  }
+
+  getRemainingConfirmedMedias(): any[] {
+    const result: any[] = [];
+    let skippedFirst = false;
+    for (const media of this.medias) {
+      if (this.confirmedMediaUrls.has(media.url)) {
+        if (!skippedFirst) {
+          skippedFirst = true;
+          continue; // skip the first
+        }
+        result.push(media);
+      }
+    }
+    return result;
+  }
+
+  getConfirmedMediaList(): any[] {
+    const all = this.medias.filter((m: any) =>
+      this.confirmedMediaUrls.has(m.url)
+    );
+    if (all.length <= 1) return [];
+
+    const remaining = all.slice(1); // exclude first
+    return this.isExpanded ? remaining : remaining.slice(0, this.maxThumbnails);
+  }
+
+  getExtraCount(): number {
+    const total = this.medias.filter((m: any) =>
+      this.confirmedMediaUrls.has(m.url)
+    ).length;
+    if (total <= 1) return 0; // no extra if only 1 image
+    const remaining = total - 1; // exclude the first image
+    return remaining > this.maxThumbnails ? remaining - this.maxThumbnails : 0;
   }
 }
