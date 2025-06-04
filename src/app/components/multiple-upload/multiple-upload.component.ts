@@ -30,10 +30,10 @@ export class MultipleUploadComponent {
   media: any = undefined;
   meta: PaginationMeta = { page: 1, limit: 0, totalPages: 1, total: 0 };
   selectedMediaUrls: Set<string> = new Set();
-  @ViewChild('mediaModal') mediaModalRef!: ElementRef;
+  // @ViewChild('mediaModal') mediaModalRef!: ElementRef;
   @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
 
-  confirmedMediaUrls: string[] = [];
+  confirmedMediaUrls: Set<string> = new Set();
   selectedConfirmedUrls: Set<string> = new Set();
 
   uploadedFiles: {
@@ -53,10 +53,10 @@ export class MultipleUploadComponent {
   ) {}
 
   ngAfterViewInit() {
-    const modalEl = this.mediaModalRef.nativeElement;
-    modalEl.addEventListener('hidden.bs.modal', () => {
-      // this.selectedMediaUrls.clear(); // Just clear selection, not uploaded media
-    });
+    // const modalEl = this.mediaModalRef.nativeElement;
+    // modalEl.addEventListener('hidden.bs.modal', () => {
+    //   // this.selectedMediaUrls.clear(); // Just clear selection, not uploaded media
+    // });
   }
 
   ngOnInit() {
@@ -117,7 +117,8 @@ export class MultipleUploadComponent {
               mimeType: fileData.mimeType || 'image/png',
             };
             this.medias.unshift(newMedia);
-            this.selectedMediaUrls.add(newMedia.url);
+            this.confirmedMediaUrls.add(newMedia.url); // ✅ make visible outside
+            this.selectedMediaUrls.add(newMedia.url); // ✅ also show selected in modal
           }
           this.isUploading = true;
         }
@@ -164,6 +165,7 @@ export class MultipleUploadComponent {
       error: (err) => console.error('S3 upload error:', err),
     });
   }
+
   removeImage(index: number) {
     this.previewUrls.splice(index, 1);
     this.previewFiles.splice(index, 1);
@@ -251,7 +253,8 @@ export class MultipleUploadComponent {
                 mimeType: fileData.mimeType || 'image/png',
               };
               this.medias.unshift(newMedia);
-              // ✅ Do NOT add to tempSelectedMediaUrls (remove selection binding)
+              this.selectedMediaUrls.add(newMedia.url); // modal selection
+              this.confirmedMediaUrls.add(newMedia.url); // show outside too
             };
 
             reader.readAsDataURL(file);
@@ -263,12 +266,13 @@ export class MultipleUploadComponent {
   }
 
   onModalConfirmSelection() {
-    this.confirmedMediaUrls = Array.from(this.selectedMediaUrls);
+    this.confirmedMediaUrls = new Set(this.selectedMediaUrls);
   }
 
   get allMediaUrls(): string[] {
-    const uploaded = this.uploadedFiles.map((f) => f.url);
-    return [...uploaded, ...this.confirmedMediaUrls];
+    return this.medias
+      .filter((media: any) => this.confirmedMediaUrls.has(media.url))
+      .map((media: any) => media.url);
   }
 
   triggerMainUpload() {
@@ -289,12 +293,5 @@ export class MultipleUploadComponent {
 
   isChecked(url: string): boolean {
     return this.selectedConfirmedUrls.has(url);
-  }
-
-  removeSelected() {
-    this.confirmedMediaUrls = this.confirmedMediaUrls.filter(
-      (url) => !this.selectedConfirmedUrls.has(url)
-    );
-    this.selectedConfirmedUrls.clear();
   }
 }
