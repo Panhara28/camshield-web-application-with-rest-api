@@ -6,6 +6,12 @@ import { AuthService } from '../../services/auth.service';
 import { MediaService } from '../../services/medias.service';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import {
+  CdkDragDrop,
+  CdkDrag,
+  CdkDropList,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 
 interface PaginationMeta {
   page?: number;
@@ -17,7 +23,7 @@ interface PaginationMeta {
 @Component({
   selector: 'app-multiple-upload',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CdkDrag, CdkDropList],
   templateUrl: './multiple-upload.component.html',
   styleUrl: './multiple-upload.component.css',
 })
@@ -35,6 +41,7 @@ export class MultipleUploadComponent {
   isExpanded = false;
   confirmedMediaUrls: Set<string> = new Set();
   selectedConfirmedUrls: Set<string> = new Set();
+  confirmedMediaList: any[] = [];
 
   uploadedFiles: {
     file: File;
@@ -59,6 +66,14 @@ export class MultipleUploadComponent {
         this.meta = res.meta;
       });
     });
+  }
+
+  drop(event: CdkDragDrop<any[]>) {
+    moveItemInArray(
+      this.confirmedMediaList,
+      event.previousIndex,
+      event.currentIndex
+    );
   }
 
   onFileDropped(event: DragEvent) {
@@ -112,6 +127,9 @@ export class MultipleUploadComponent {
             this.medias.unshift(newMedia);
             this.confirmedMediaUrls.add(newMedia.url); // ✅ make visible outside
             this.selectedMediaUrls.add(newMedia.url); // ✅ also show selected in modal
+            this.confirmedMediaList = this.medias.filter((m: any) =>
+              this.confirmedMediaUrls.has(m.url)
+            );
           }
           this.isUploading = true;
         }
@@ -248,6 +266,9 @@ export class MultipleUploadComponent {
               this.medias.unshift(newMedia);
               this.selectedMediaUrls.add(newMedia.url); // modal selection
               this.confirmedMediaUrls.add(newMedia.url); // show outside too
+              this.confirmedMediaList = this.medias.filter((m: any) =>
+                this.confirmedMediaUrls.has(m.url)
+              );
             };
 
             reader.readAsDataURL(file);
@@ -260,6 +281,9 @@ export class MultipleUploadComponent {
 
   onModalConfirmSelection() {
     this.confirmedMediaUrls = new Set(this.selectedMediaUrls);
+    this.confirmedMediaList = this.medias.filter((m: any) =>
+      this.confirmedMediaUrls.has(m.url)
+    );
   }
 
   get allMediaUrls(): string[] {
@@ -311,22 +335,16 @@ export class MultipleUploadComponent {
     }
     return result;
   }
-
   getConfirmedMediaList(): any[] {
-    const all = this.medias.filter((m: any) =>
-      this.confirmedMediaUrls.has(m.url)
-    );
-    if (all.length <= 1) return [];
+    if (this.confirmedMediaList.length <= 1) return [];
 
-    const remaining = all.slice(1); // exclude first
+    const remaining = this.confirmedMediaList.slice(0); // exclude the first image
     return this.isExpanded ? remaining : remaining.slice(0, this.maxThumbnails);
   }
-
   getExtraCount(): number {
-    const total = this.medias.filter((m: any) =>
-      this.confirmedMediaUrls.has(m.url)
-    ).length;
-    if (total <= 1) return 0; // no extra if only 1 image
+    const total = this.confirmedMediaList.length;
+    if (total <= 1) return 0;
+
     const remaining = total - 1; // exclude the first image
     return remaining > this.maxThumbnails ? remaining - this.maxThumbnails : 0;
   }

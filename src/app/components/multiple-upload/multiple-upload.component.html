@@ -24,70 +24,71 @@
   </div>
 </div>
 <!-- Thumbnail Gallery -->
-<div class="d-flex flex-wrap gap-3 mt-2">
-  <!-- First large preview -->
-  <div
-    class="border rounded-3 overflow-hidden"
-    style="width: 180px; height: 180px; flex-shrink: 0"
-    *ngIf="confirmedMediaUrls.size > 0"
-  >
-    <img
-      [src]="getFirstConfirmedUrl()"
-      class="w-100 h-100 object-fit-cover"
-      alt="main image"
-    />
-  </div>
-
-  <!-- Thumbnails Grid -->
-  <div
-    class="d-flex flex-wrap gap-3 align-content-start"
-    style="flex: 1; min-width: 0"
-  >
-    <ng-container *ngFor="let media of getConfirmedMediaList(); let i = index">
-      <div
-        class="border rounded-3 overflow-hidden"
-        style="width: 80px; height: 80px; flex-shrink: 0"
+<div
+  cdkDropList
+  [cdkDropListData]="getConfirmedMediaList()"
+  (cdkDropListDropped)="drop($event)"
+  cdkDropListOrientation="mixed"
+>
+  <div class="d-flex flex-wrap gap-3 mt-2">
+    <!-- Thumbnails Grid -->
+    <div
+      class="d-flex flex-wrap gap-3 align-content-start"
+      style="flex: 1; min-width: 0"
+    >
+      <ng-container
+        *ngFor="let media of getConfirmedMediaList(); let i = index"
       >
-        <img
-          [src]="media.url"
-          class="w-100 h-100 object-fit-cover"
-          [alt]="'media ' + i"
-        />
+        <div
+          class="border rounded-3 overflow-hidden"
+          [style]="
+            i == 0
+              ? 'width: 180px; height: 180px; flex-shrink: 0'
+              : 'width: 80px; height: 80px; flex-shrink: 0'
+          "
+          cdkDrag
+        >
+          <img
+            [src]="media.url"
+            class="w-100 h-100 object-fit-cover"
+            [alt]="'media ' + i"
+          />
+        </div>
+      </ng-container>
+
+      <!-- "+X" overlay if needed -->
+      <div
+        *ngIf="getExtraCount() > 0 && !isExpanded"
+        class="position-relative border rounded-3 overflow-hidden text-white d-flex justify-content-center align-items-center"
+        style="
+          width: 80px;
+          height: 80px;
+          background-color: rgba(0, 0, 0, 0.5);
+          cursor: pointer;
+          flex-shrink: 0;
+        "
+        (click)="isExpanded = true"
+      >
+        <div class="fw-semibold">+{{ getExtraCount() }}</div>
       </div>
-    </ng-container>
 
-    <!-- "+X" overlay if needed -->
-    <div
-      *ngIf="getExtraCount() > 0 && !isExpanded"
-      class="position-relative border rounded-3 overflow-hidden text-white d-flex justify-content-center align-items-center"
-      style="
-        width: 80px;
-        height: 80px;
-        background-color: rgba(0, 0, 0, 0.5);
-        cursor: pointer;
-        flex-shrink: 0;
-      "
-      (click)="isExpanded = true"
-    >
-      <div class="fw-semibold">+{{ getExtraCount() }}</div>
-    </div>
-
-    <!-- "+" button -->
-    <div
-      *ngIf="confirmedMediaUrls.size > 0"
-      class="d-flex justify-content-center align-items-center border rounded-3 border-secondary-subtle"
-      style="
-        width: 80px;
-        height: 80px;
-        cursor: pointer;
-        border-style: dashed;
-        background-color: #f9f9f9;
-        flex-shrink: 0;
-      "
-      data-bs-toggle="modal"
-      data-bs-target="#mediaModal"
-    >
-      <span class="fs-2 fw-light">+</span>
+      <!-- "+" button -->
+      <div
+        *ngIf="confirmedMediaUrls.size > 0"
+        class="d-flex justify-content-center align-items-center border rounded-3 border-secondary-subtle"
+        style="
+          width: 80px;
+          height: 80px;
+          cursor: pointer;
+          border-style: dashed;
+          background-color: #f9f9f9;
+          flex-shrink: 0;
+        "
+        data-bs-toggle="modal"
+        data-bs-target="#mediaModal"
+      >
+        <span class="fs-2 fw-light">+</span>
+      </div>
     </div>
   </div>
 </div>
