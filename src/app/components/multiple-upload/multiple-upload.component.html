@@ -72,7 +72,19 @@
           <ng-container
             *ngFor="let media of getConfirmedMediaList(); let i = index"
           >
-            <div class="col-6 col-md-3" cdkDrag>
+            <div class="col-6 col-md-3" (click)="onMediaClicked(media)" cdkDrag>
+              <!-- <app-image-detail
+                [imageUrl]="media.url"
+                [filename]="media.name"
+                [altText]="media.alt"
+                [fileExtension]="media.extension"
+                [fileSize]="media.size"
+                [width]="media.width"
+                [height]="media.height"
+                [addedDate]="media.added"
+                (onToggle)="onMediaClicked($event)"
+              >
+              </app-image-detail> -->
               <div
                 class="card small-card media-hover-wrapper"
                 [class.card-selected]="isMediaChecked(media.url)"
@@ -84,6 +96,7 @@
                     class="form-check-input select-checkbox"
                     [checked]="isMediaChecked(media.url)"
                     (change)="onMediaCheckboxToggle(media.url, $event)"
+                    (click)="$event.stopPropagation()"
                   />
 
                   <!-- Drag Icon -->
@@ -265,3 +278,17 @@
     </div>
   </div>
 </div>
+
+<app-image-detail
+  (close)="selectedImageDetail = ''"
+  *ngIf="selectedImageDetail"
+  [imageUrl]="selectedImageDetail.url"
+  [filename]="selectedImageDetail.filename"
+  [altText]="selectedImageDetail.altText"
+  [fileExtension]="selectedImageDetail.extension"
+  [fileSize]="selectedImageDetail.size"
+  [width]="selectedImageDetail.width"
+  [height]="selectedImageDetail.height"
+  [addedDate]="selectedImageDetail.createdAt"
+>
+</app-image-detail>

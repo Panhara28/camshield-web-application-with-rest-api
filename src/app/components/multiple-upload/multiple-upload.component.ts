@@ -12,6 +12,7 @@ import {
   CdkDropList,
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
+import { ImageDetailComponent } from '../image-detail/image-detail.component';
 
 interface PaginationMeta {
   page?: number;
@@ -23,7 +24,7 @@ interface PaginationMeta {
 @Component({
   selector: 'app-multiple-upload',
   standalone: true,
-  imports: [CommonModule, CdkDrag, CdkDropList],
+  imports: [CommonModule, CdkDrag, CdkDropList, ImageDetailComponent],
   templateUrl: './multiple-upload.component.html',
   styleUrl: './multiple-upload.component.css',
 })
@@ -43,6 +44,8 @@ export class MultipleUploadComponent {
   selectedConfirmedUrls: Set<string> = new Set();
   confirmedMediaList: any[] = [];
   checkedMediaUrls: Set<string> = new Set();
+  selectedImageDetail: any = null;
+  isImagePopupOpen = false;
 
   uploadedFiles: {
     file: File;
@@ -397,5 +400,8 @@ export class MultipleUploadComponent {
     return this.confirmedMediaList.length > 0
       ? this.confirmedMediaList[0]
       : null;
+  }
+  onMediaClicked(media: any): void {
+    this.selectedImageDetail = media;
   }
 }

@@ -1,0 +1,56 @@
+<!-- image-detail.component.html -->
+<div class="image-detail-overlay">
+  <div class="top-bar">
+    <span (click)="closePopup()" style="cursor: pointer">Close</span>
+    <span class="filename">{{ filename }}</span>
+    <span class="page-info">1 of 1</span>
+    <button
+      class="toggle-sidebar ms-2 d-md-none ms-auto"
+      (click)="toggleSidebar()"
+    >
+      ☰
+    </button>
+  </div>
+
+  <div class="image-container" (click)="handleImageClick()">
+    <div class="image-box">
+      <img [src]="imageUrl" [alt]="altText" class="img-fluid" />
+    </div>
+  </div>
+
+  <div class="sidebar d-none d-md-block">
+    <h6 class="information-detail">Information</h6>
+    <div class="mb-2">
+      <label class="form-label" style="background: #1c1c1c">Name</label>
+      <input class="form-control form-control-sm" [value]="filename" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label" style="background: #1c1c1c">Alt text</label>
+      <input class="form-control form-control-sm" [value]="altText" />
+    </div>
+    <p class="text-white small mt-4">
+      Details<br />{{ fileExtension.toUpperCase() }} • {{ width }} ×
+      {{ height }} • {{ fileSize }}<br />Added {{ addedDate }}
+    </p>
+  </div>
+
+  <div
+    class="sidebar d-md-none"
+    [class.show]="isSidebarVisible"
+    id="mobileSidebar"
+  >
+    <h6 class="information-detail">Information</h6>
+    <div class="mb-2">
+      <label class="form-label">Name</label>
+      <input class="form-control form-control-sm" [value]="filename" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Alt text</label>
+      <input class="form-control form-control-sm" [value]="altText" />
+    </div>
+    <p class="text-white small mt-4">
+      Details<br />{{ fileExtension }} • {{ width }} × {{ height }} •
+      {{ fileSize }}<br />Added {{ addedDate }}
+    </p>
+  </div>
+</div>
