@@ -42,6 +42,7 @@ export class MultipleUploadComponent {
   confirmedMediaUrls: Set<string> = new Set();
   selectedConfirmedUrls: Set<string> = new Set();
   confirmedMediaList: any[] = [];
+  checkedMediaUrls: Set<string> = new Set();
 
   uploadedFiles: {
     file: File;
@@ -58,6 +59,28 @@ export class MultipleUploadComponent {
     private route: ActivatedRoute,
     private snackBar: MatSnackBar
   ) {}
+
+  onMediaCheckboxChange(url: string, event: Event): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    if (isChecked) {
+      this.checkedMediaUrls.add(url);
+    } else {
+      this.checkedMediaUrls.delete(url);
+    }
+  }
+
+  isMediaChecked(url: string): boolean {
+    return this.checkedMediaUrls.has(url);
+  }
+
+  onMediaCheckboxToggle(url: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.checked) {
+      this.checkedMediaUrls.add(url);
+    } else {
+      this.checkedMediaUrls.delete(url);
+    }
+  }
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
@@ -348,5 +371,31 @@ export class MultipleUploadComponent {
 
     const remaining = total - 0; // exclude the first image
     return remaining > this.maxThumbnails ? remaining - this.maxThumbnails : 0;
+  }
+
+  clearSelectedMedia(): void {
+    // Remove from main medias array
+    this.medias = this.medias.filter(
+      (media: any) => !this.checkedMediaUrls.has(media.url)
+    );
+
+    // Remove from confirmedMediaUrls set
+    for (const url of this.checkedMediaUrls) {
+      this.confirmedMediaUrls.delete(url);
+    }
+
+    // Update confirmedMediaList accordingly
+    this.confirmedMediaList = this.medias.filter((m: any) =>
+      this.confirmedMediaUrls.has(m.url)
+    );
+
+    // Clear selected checkboxes
+    this.checkedMediaUrls.clear();
+  }
+
+  getFirstConfirmedMedia(): any | null {
+    return this.confirmedMediaList.length > 0
+      ? this.confirmedMediaList[0]
+      : null;
   }
 }

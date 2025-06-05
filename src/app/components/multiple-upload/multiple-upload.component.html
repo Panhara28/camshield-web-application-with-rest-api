@@ -30,37 +30,66 @@
   (cdkDropListDropped)="drop($event)"
   cdkDropListOrientation="mixed"
 >
-  <div class="container-fluid p-3">
+  <div class="container">
     <!-- Thumbnails Grid -->
     <div class="row">
-      <div class="col-md-4 p-0" *ngIf="getConfirmedMediaList().length">
-        <div class="card large-card overflow">
+      <div
+        class="d-flex align-items-center justify-content-between mb-2 p-0"
+        *ngIf="checkedMediaUrls.size > 0"
+      >
+        <div class="d-flex align-items-center gap-2">
+          <div
+            class="bg-dark text-white d-flex align-items-center justify-content-center rounded"
+            style="width: 24px; height: 24px"
+          >
+            <i class="fa fa-minus" style="font-size: 12px"></i>
+          </div>
+          <span class="text-muted">
+            {{ checkedMediaUrls.size }} files selected
+          </span>
+        </div>
+
+        <button
+          class="btn btn-link text-danger p-0"
+          (click)="clearSelectedMedia()"
+        >
+          Remove
+        </button>
+      </div>
+      <div class="col-md-4 p-0" *ngIf="getFirstConfirmedMedia()">
+        <div class="card large-card overflow" style="cursor: pointer">
           <div class="card-body">
             <img
-              [src]="getConfirmedMediaList()[0].url"
+              [src]="getFirstConfirmedMedia().url"
               class="w-100 h-100 object-fit-cover"
-              [alt]="'media'"
+              alt="media"
             />
           </div>
         </div>
       </div>
-      <div class="col-md-8">
+      <div class="col-md-8 pe-0">
         <div class="row g-3">
           <ng-container
             *ngFor="let media of getConfirmedMediaList(); let i = index"
           >
             <div class="col-6 col-md-3" cdkDrag>
-              <div class="card small-card media-hover-wrapper">
+              <div
+                class="card small-card media-hover-wrapper"
+                [class.card-selected]="isMediaChecked(media.url)"
+              >
                 <div class="hover-overlay">
                   <!-- Checkbox -->
                   <input
                     type="checkbox"
                     class="form-check-input select-checkbox"
+                    [checked]="isMediaChecked(media.url)"
+                    (change)="onMediaCheckboxToggle(media.url, $event)"
                   />
 
                   <!-- Drag Icon -->
-                  <i class="fa-solid fa-maximize"></i>
+                  <i class="fa-solid fa-grip-vertical" style="opacity: 0.5"></i>
                 </div>
+
                 <div class="card-body p-0">
                   <img
                     [src]="media.url"
@@ -131,20 +160,50 @@
 
       <div class="modal-body">
         <!-- Filters -->
-        <div
-          class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-3"
-        >
-          <input
-            type="text"
-            class="form-control flex-grow-1"
-            style="max-width: 400px"
-            placeholder="Search files"
-          />
-          <div class="btn-group gap-1">
-            <button class="btn btn-outline-secondary btn-sm">File type</button>
-            <button class="btn btn-outline-secondary btn-sm">File size</button>
-            <button class="btn btn-outline-secondary btn-sm">Used in</button>
-            <button class="btn btn-outline-secondary btn-sm">Product</button>
+        <div class="search-wrapper mb-2">
+          <!-- Left: Search + Filters -->
+          <div class="search-area">
+            <div class="search-input-wrapper">
+              <i class="bi bi-search"></i>
+              <input
+                type="text"
+                class="form-control search-input"
+                placeholder="Search files"
+              />
+            </div>
+            <div class="filter-buttons d-flex">
+              <select class="filter-select">
+                <option selected disabled>File type</option>
+                <option>Image</option>
+                <option>Video</option>
+              </select>
+              <select class="filter-select">
+                <option selected disabled>File size</option>
+                <option>Small</option>
+                <option>Large</option>
+              </select>
+              <select class="filter-select">
+                <option selected disabled>Used in</option>
+                <option>Project A</option>
+                <option>Project B</option>
+              </select>
+              <select class="filter-select">
+                <option selected disabled>Product</option>
+                <option>App 1</option>
+                <option>App 2</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Right: Sort + View -->
+          <div class="action-buttons d-flex gap-2">
+            <button class="sort-button">
+              <i class="bi bi-arrow-down-up"></i> Sort
+            </button>
+            <select>
+              <option selected>Grid View</option>
+              <option>List View</option>
+            </select>
           </div>
         </div>
 
