@@ -1,4 +1,10 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CreateMediaService } from '../../services/create-media.service';
 import { MultipleUploadService } from '../../services/multiple-upload.service';
@@ -46,6 +52,7 @@ export class MultipleUploadComponent {
   checkedMediaUrls: Set<string> = new Set();
   selectedImageDetail: any = null;
   isImagePopupOpen = false;
+  @Output() mediaUrlsChanged = new EventEmitter<any[]>();
 
   uploadedFiles: {
     file: File;
@@ -132,32 +139,16 @@ export class MultipleUploadComponent {
     this.multipleUploadService.uploadFiles('multiple', uploadFiles).subscribe({
       next: (event: any) => {
         if (event?.body !== undefined) {
+          // Add temporary media for UI display
           for (let i = 0; i < event.body.length; i++) {
-            const file = uploadFiles[i];
             const fileData = event.body[i];
-            const preview = this.previewUrls[i];
-            const uploaded = {
-              file,
-              url: fileData.url,
-              filename: fileData.filename,
-              preview,
-            };
-
-            this.uploadedFiles.push(uploaded);
-
-            const newMedia = {
-              url: fileData.url,
-              filename: fileData.filename,
-              mimeType: fileData.mimeType || 'image/png',
-            };
-            this.medias.unshift(newMedia);
-            this.confirmedMediaUrls.add(newMedia.url); // ✅ make visible outside
-            this.selectedMediaUrls.add(newMedia.url); // ✅ also show selected in modal
-            this.confirmedMediaList = this.medias.filter((m: any) =>
-              this.confirmedMediaUrls.has(m.url)
-            );
+            const url = fileData.url;
+            this.confirmedMediaUrls.add(url);
+            this.selectedMediaUrls.add(url);
           }
-          this.isUploading = true;
+          this.mediaUrlsChanged.emit(event.body); // emit to parent
+
+          this.loadMediaList(); // ✅ reload actual media objects from backend
         }
       },
       error: (err) => console.error('Upload error:', err),
@@ -214,38 +205,6 @@ export class MultipleUploadComponent {
     }
   }
 
-  onUpload() {
-    this.isUploading = true;
-    this.isUploadButtonDisabled = true;
-    this.user.getCurrentUser().subscribe({
-      next: async (user) => {
-        const uploadedById = Number(user?.id);
-
-        for (let uploaded of this.uploadedFiles) {
-          const metadata = await this.createMediaService.createMedia(
-            uploaded.file,
-            uploadedById
-          );
-          metadata.url = uploaded.url;
-          metadata.storedFilename = uploaded.filename;
-          await this.createMediaService.submitMetadata(metadata).toPromise();
-        }
-        this.snackBar.open('Images metadata successfully submitted.', 'Close', {
-          duration: 5000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-          panelClass: ['custom-snackbar-success'],
-        });
-        this.isUploading = false;
-        this.previewUrls = [];
-        this.uploadedFiles = [];
-        this.previewFiles = [];
-        this.isUploading = false;
-      },
-      error: (err) => console.error('User fetch error:', err),
-    });
-  }
-
   isSelectedMedia(url: string): boolean {
     return this.selectedMediaUrls.has(url);
   }
@@ -268,37 +227,12 @@ export class MultipleUploadComponent {
       next: (event: any) => {
         if (event?.body !== undefined) {
           for (let i = 0; i < event.body.length; i++) {
-            const file = uploadFiles[i];
-            const fileData = event.body[i];
-            const reader = new FileReader();
-
-            reader.onload = (e: any) => {
-              const preview = e.target.result;
-
-              const uploaded = {
-                file,
-                url: fileData.url,
-                filename: fileData.filename,
-                preview,
-              };
-
-              this.uploadedFiles.push(uploaded);
-
-              const newMedia = {
-                url: fileData.url,
-                filename: fileData.filename,
-                mimeType: fileData.mimeType || 'image/png',
-              };
-              this.medias.unshift(newMedia);
-              this.selectedMediaUrls.add(newMedia.url); // modal selection
-              this.confirmedMediaUrls.add(newMedia.url); // show outside too
-              this.confirmedMediaList = this.medias.filter((m: any) =>
-                this.confirmedMediaUrls.has(m.url)
-              );
-            };
-
-            reader.readAsDataURL(file);
+            const url = event.body[i].url;
+            this.confirmedMediaUrls.add(url);
+            this.selectedMediaUrls.add(url);
           }
+
+          this.loadMediaList(); // ✅ reload with full metadata
         }
       },
       error: (err) => console.error('Modal upload error:', err),
@@ -310,6 +244,7 @@ export class MultipleUploadComponent {
     this.confirmedMediaList = this.medias.filter((m: any) =>
       this.confirmedMediaUrls.has(m.url)
     );
+    this.mediaUrlsChanged.emit(this.confirmedMediaList); // ⬅ Emit full media objects
   }
 
   get allMediaUrls(): string[] {
@@ -403,5 +338,21 @@ export class MultipleUploadComponent {
   }
   onMediaClicked(media: any): void {
     this.selectedImageDetail = media;
+  }
+
+  private loadMediaList() {
+    const params = this.route.snapshot.queryParams;
+    this.mediaService.getMedias(params).subscribe({
+      next: (res) => {
+        this.medias = res.data;
+        this.meta = res.meta;
+
+        // Refresh confirmedMediaList from confirmedMediaUrls
+        this.confirmedMediaList = this.medias.filter((m: any) =>
+          this.confirmedMediaUrls.has(m.url)
+        );
+      },
+      error: (err) => console.error('Failed to fetch medias:', err),
+    });
   }
 }

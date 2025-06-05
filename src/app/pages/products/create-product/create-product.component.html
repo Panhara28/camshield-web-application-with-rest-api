@@ -34,7 +34,9 @@
             ></quill-editor>
           </div>
           <div class="mb-3">
-            <app-multiple-upload></app-multiple-upload>
+            <app-multiple-upload
+              (mediaUrlsChanged)="onMediaUrlsChanged($event)"
+            ></app-multiple-upload>
           </div>
           <div class="mb-3">
             <label class="form-label">Choose a product category</label>

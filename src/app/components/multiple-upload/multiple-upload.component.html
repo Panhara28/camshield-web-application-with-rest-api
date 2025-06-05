@@ -73,18 +73,6 @@
             *ngFor="let media of getConfirmedMediaList(); let i = index"
           >
             <div class="col-6 col-md-3" (click)="onMediaClicked(media)" cdkDrag>
-              <!-- <app-image-detail
-                [imageUrl]="media.url"
-                [filename]="media.name"
-                [altText]="media.alt"
-                [fileExtension]="media.extension"
-                [fileSize]="media.size"
-                [width]="media.width"
-                [height]="media.height"
-                [addedDate]="media.added"
-                (onToggle)="onMediaClicked($event)"
-              >
-              </app-image-detail> -->
               <div
                 class="card small-card media-hover-wrapper"
                 [class.card-selected]="isMediaChecked(media.url)"

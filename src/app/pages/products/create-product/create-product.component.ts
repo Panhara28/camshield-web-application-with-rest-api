@@ -39,6 +39,7 @@ export class CreateProductComponent {
     sku: '',
     barcode: '',
     variants: [],
+    mediaUrls: [],
   };
 
   groupBy: string = 'Size';
@@ -319,8 +320,14 @@ export class CreateProductComponent {
       compareAtPrice: this.product.compareAtPrice,
       costPerItem: this.product.costPerItem,
       variants,
+      mediaUrls: this.product.mediaUrls,
     };
+    console.log('🛰️ Medias:', this.product.mediaUrls);
 
     console.log('🛰️ SUBMIT PAYLOAD TO API:', payload);
+  }
+
+  onMediaUrlsChanged(mediaList: any[]) {
+    this.product.mediaUrls = mediaList; // ⬅ store full media object, not just URLs
   }
 }
