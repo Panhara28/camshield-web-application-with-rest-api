@@ -37,7 +37,7 @@ export class MultipleUploadComponent {
   meta: PaginationMeta = { page: 1, limit: 20, totalPages: 1, total: 0 };
   selectedMediaUrls: Set<string> = new Set();
   @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
-  maxThumbnails = 6;
+  maxThumbnails = 8;
   isExpanded = false;
   confirmedMediaUrls: Set<string> = new Set();
   selectedConfirmedUrls: Set<string> = new Set();
@@ -341,11 +341,12 @@ export class MultipleUploadComponent {
     const remaining = this.confirmedMediaList.slice(0); // exclude the first image
     return this.isExpanded ? remaining : remaining.slice(0, this.maxThumbnails);
   }
+
   getExtraCount(): number {
     const total = this.confirmedMediaList.length;
     if (total <= 1) return 0;
 
-    const remaining = total - 1; // exclude the first image
+    const remaining = total - 0; // exclude the first image
     return remaining > this.maxThumbnails ? remaining - this.maxThumbnails : 0;
   }
 }

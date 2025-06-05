@@ -121,3 +121,18 @@
   color: #444;
   word-break: break-word;
 }
+
+.large-card {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+}
+
+.small-card {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+}
+
+.cdk-drag-preview {
+  max-width: 100vw !important;
+  overflow: hidden !important;
+}
