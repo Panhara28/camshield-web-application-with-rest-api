@@ -56,8 +56,14 @@
           Remove
         </button>
       </div>
+      <label class="media-upload-label p-0 media-label">Media</label>
+
       <div class="col-md-4 p-0" *ngIf="getFirstConfirmedMedia()">
-        <div class="card large-card overflow" style="cursor: pointer">
+        <div
+          class="card large-card overflow"
+          style="cursor: pointer"
+          (click)="onMediaClicked(getFirstConfirmedMedia())"
+        >
           <div class="card-body">
             <img
               [src]="getFirstConfirmedMedia().url"

@@ -1,99 +1,186 @@
-<!-- Modal: Select existing -->
-<div
-  class="modal fade"
-  #mediaModal
-  id="mediaModal"
-  tabindex="-1"
-  aria-labelledby="mediaModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Select file</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-
-      <div class="modal-body">
-        <!-- Filters -->
-        <div
-          class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-3"
-        >
-          <input
-            type="text"
-            class="form-control flex-grow-1"
-            style="max-width: 400px"
-            placeholder="Search files"
-          />
-          <div class="btn-group gap-1">
-            <button class="btn btn-outline-secondary btn-sm">File type</button>
-            <button class="btn btn-outline-secondary btn-sm">File size</button>
-            <button class="btn btn-outline-secondary btn-sm">Used in</button>
-            <button class="btn btn-outline-secondary btn-sm">Product</button>
-          </div>
-        </div>
-
-        <!-- Add media buttons -->
-        <div class="text-center my-4">
-          <input
-            type="file"
-            #modalFileInput
-            (change)="onFileSelected($event)"
-            multiple
-            hidden
-          />
-          <button
-            class="btn btn-outline-primary btn-sm me-2"
-            (click)="modalFileInput.click()"
-          >
-            Add media
-          </button>
-          <p class="text-muted mt-2 mb-0">
-            Drag and drop images, videos, 3D models, and files
-          </p>
-        </div>
-
-        <div class="media-grid mt-4">
-          <div
-            class="media-card position-relative"
-            *ngFor="let media of medias"
-            (click)="toggleMediaSelection(media.url)"
-            [class.border-primary]="isSelectedMedia(media.url)"
-            style="cursor: pointer"
-          >
-            <img [src]="media.url" alt="media preview" />
-            <div class="caption">{{ media.filename }}</div>
-
-            <input
-              type="checkbox"
-              class="form-check-input position-absolute"
-              style="top: 6px; left: 6px"
-              [checked]="isSelectedMedia(media.url)"
-              (click)="
-                $event.stopPropagation(); toggleMediaSelection(media.url)
-              "
-            />
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-          Cancel
-        </button>
-        <button
-          class="btn btn-primary btn-sm"
-          data-bs-dismiss="modal"
-          (click)="onDoneClick()"
-        >
-          Done
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+<script>
+  const a = {
+    title: "Product 1",
+    description: '{"ops":[{"insert":"Hello world\\n"}]}',
+    category: "Home & Garden",
+    type: "Shirt",
+    vendor: "Acme Co.",
+    price: 100,
+    compareAtPrice: 200,
+    costPerItem: 50,
+    variants: [
+      {
+        price: 100,
+        compareAtPrice: 200,
+        costPerItem: 50,
+        stock: 100,
+        sku: "M-Red-SKU1",
+        size: "M",
+        color: "Red",
+        material: "",
+      },
+      {
+        price: 100,
+        compareAtPrice: 200,
+        costPerItem: 50,
+        stock: 100,
+        sku: "M-Blue-SKU2",
+        size: "M",
+        color: "Blue",
+        material: "",
+      },
+      {
+        price: 100,
+        compareAtPrice: 200,
+        costPerItem: 50,
+        stock: 100,
+        sku: "S-Red-SKU3",
+        size: "S",
+        color: "Red",
+        material: "",
+      },
+      {
+        price: 100,
+        compareAtPrice: 200,
+        costPerItem: 50,
+        stock: 100,
+        sku: "S-Blue-SKU4",
+        size: "S",
+        color: "Blue",
+        material: "",
+      },
+      {
+        price: 100,
+        compareAtPrice: 200,
+        costPerItem: 50,
+        stock: 100,
+        sku: "L-Red-SKU5",
+        size: "L",
+        color: "Red",
+        material: "",
+      },
+      {
+        price: 100,
+        compareAtPrice: 200,
+        costPerItem: 50,
+        stock: 100,
+        sku: "L-Blue-SKU6",
+        size: "L",
+        color: "Blue",
+        material: "",
+      },
+    ],
+    mediaUrls: [
+      {
+        id: "10d7a0fb-42f9-4ff2-89de-9aae5367d268",
+        filename: "p-38-m.png",
+        storedFilename: "941471f5-d97d-4e6f-8333-ae0c1eada661.png",
+        url: "https://hvacdfp-bucket.sgp1.cdn.digitaloceanspaces.com/multiple/941471f5-d97d-4e6f-8333-ae0c1eada661.png",
+        type: "IMAGE",
+        mimetype: "image/png",
+        extension: "png",
+        size: 32020,
+        title: "p-38-m.png",
+        altText: "",
+        description: "",
+        uploadedById: 1,
+        uploadedAt: "2025-06-05T13:14:25.134Z",
+        width: 350,
+        height: 350,
+        visibility: "PUBLIC",
+        isDeleted: false,
+        createdAt: "2025-06-05T13:14:25.134Z",
+        updatedAt: "2025-06-05T13:14:25.134Z",
+        productId: null,
+      },
+      {
+        id: "c09a5fcf-07e2-4034-8a11-8ea2f77f342b",
+        filename: "p-34.png",
+        storedFilename: "808d3541-b35a-444c-9e51-2b60f13893d4.png",
+        url: "https://hvacdfp-bucket.sgp1.cdn.digitaloceanspaces.com/multiple/808d3541-b35a-444c-9e51-2b60f13893d4.png",
+        type: "IMAGE",
+        mimetype: "image/png",
+        extension: "png",
+        size: 35907,
+        title: "p-34.png",
+        altText: "",
+        description: "",
+        uploadedById: 1,
+        uploadedAt: "2025-06-05T13:14:25.134Z",
+        width: 230,
+        height: 200,
+        visibility: "PUBLIC",
+        isDeleted: false,
+        createdAt: "2025-06-05T13:14:25.134Z",
+        updatedAt: "2025-06-05T13:14:25.134Z",
+        productId: null,
+      },
+      {
+        id: "7575f068-e666-4a78-9305-043930c3a17e",
+        filename: "p-33.png",
+        storedFilename: "484358b2-aafc-44bc-a049-5cda92eeb19f.png",
+        url: "https://hvacdfp-bucket.sgp1.cdn.digitaloceanspaces.com/multiple/484358b2-aafc-44bc-a049-5cda92eeb19f.png",
+        type: "IMAGE",
+        mimetype: "image/png",
+        extension: "png",
+        size: 10698,
+        title: "p-33.png",
+        altText: "",
+        description: "",
+        uploadedById: 1,
+        uploadedAt: "2025-06-05T13:14:25.087Z",
+        width: 230,
+        height: 200,
+        visibility: "PUBLIC",
+        isDeleted: false,
+        createdAt: "2025-06-05T13:14:25.087Z",
+        updatedAt: "2025-06-05T13:14:25.087Z",
+        productId: null,
+      },
+      {
+        id: "09ca7407-9207-45ca-9761-40acfdd027cd",
+        filename: "p-2.png",
+        storedFilename: "17944fa2-6489-47da-b494-e1093bb91f5a.png",
+        url: "https://hvacdfp-bucket.sgp1.cdn.digitaloceanspaces.com/multiple/17944fa2-6489-47da-b494-e1093bb91f5a.png",
+        type: "IMAGE",
+        mimetype: "image/png",
+        extension: "png",
+        size: 8746,
+        title: "p-2.png",
+        altText: "",
+        description: "",
+        uploadedById: 1,
+        uploadedAt: "2025-06-05T13:14:06.541Z",
+        width: 230,
+        height: 200,
+        visibility: "PUBLIC",
+        isDeleted: false,
+        createdAt: "2025-06-05T13:14:06.541Z",
+        updatedAt: "2025-06-05T13:14:06.541Z",
+        productId: null,
+      },
+      {
+        id: "ebe04347-97f2-4cb6-87f8-9e5c711a40f3",
+        filename: "p-6.png",
+        storedFilename: "777ae05a-35e3-4e89-8074-2beda01e0da3.png",
+        url: "https://hvacdfp-bucket.sgp1.cdn.digitaloceanspaces.com/multiple/777ae05a-35e3-4e89-8074-2beda01e0da3.png",
+        type: "IMAGE",
+        mimetype: "image/png",
+        extension: "png",
+        size: 11843,
+        title: "p-6.png",
+        altText: "",
+        description: "",
+        uploadedById: 1,
+        uploadedAt: "2025-06-05T13:14:06.538Z",
+        width: 230,
+        height: 200,
+        visibility: "PUBLIC",
+        isDeleted: false,
+        createdAt: "2025-06-05T13:14:06.538Z",
+        updatedAt: "2025-06-05T13:14:06.538Z",
+        productId: null,
+      },
+    ],
+  };
+</script>

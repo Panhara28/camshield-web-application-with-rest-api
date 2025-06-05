@@ -217,7 +217,11 @@ export class CreateProductComponent {
         row.setAttribute('data-group', groupId);
         row.innerHTML = `
           <td>${label}</td>
-          <td><input type="file" accept="image/*" /></td>
+          <td class="d-flex justify-content-center">
+             <div class="upload-box">
+              <i class="fa fa-image upload-icon"></i>
+            </div>
+          </td>
           <td><input type="number" class="form-control" /></td>
           <td><input type="number" class="form-control" /></td>
         `;
@@ -296,6 +300,7 @@ export class CreateProductComponent {
             ] as HTMLInputElement
           )?.valueAsNumber || 0,
         sku: `${combo.join('-')}-SKU${idx + 1}`,
+        imageVariant: '',
       };
       cleanedOptions.forEach((opt, i) => {
         const key = opt.name.toLowerCase();

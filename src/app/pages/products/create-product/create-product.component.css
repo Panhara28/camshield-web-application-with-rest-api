@@ -1,28 +1,28 @@
 .card {
-    border-radius: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: #fff;
-  }
-  .form-control,
-  .form-check-input {
-    border-radius: 0.5rem;
-  }
-  .variant-option-values input {
-    margin-bottom: 0.5rem;
-  }
-  .variant-group {
-    background-color: #f8f9fa;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  .variant-group.collapsed + .variant-rows {
-    display: none;
-  }
-  .variant-image {
-    max-width: 40px;
-    height: auto;
-  }
-  .rich-text-toolbar button {
-    margin-right: 0.25rem;
-  }
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #fff;
+}
+.form-control,
+.form-check-input {
+  border-radius: 0.5rem;
+}
+.variant-option-values input {
+  margin-bottom: 0.5rem;
+}
+.variant-group {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  cursor: pointer;
+}
+.variant-group.collapsed + .variant-rows {
+  display: none;
+}
+.variant-image {
+  max-width: 40px;
+  height: auto;
+}
+.rich-text-toolbar button {
+  margin-right: 0.25rem;
+}
