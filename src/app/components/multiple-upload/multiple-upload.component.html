@@ -50,8 +50,18 @@
             *ngFor="let media of getConfirmedMediaList(); let i = index"
           >
             <div class="col-6 col-md-3" cdkDrag>
-              <div class="card small-card">
-                <div class="card-body">
+              <div class="card small-card media-hover-wrapper">
+                <div class="hover-overlay">
+                  <!-- Checkbox -->
+                  <input
+                    type="checkbox"
+                    class="form-check-input select-checkbox"
+                  />
+
+                  <!-- Drag Icon -->
+                  <i class="fa-solid fa-maximize"></i>
+                </div>
+                <div class="card-body p-0">
                   <img
                     [src]="media.url"
                     class="w-100 h-100 object-fit-cover"
