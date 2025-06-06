@@ -196,57 +196,29 @@ export class CreateProductComponent {
     const combinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
-
-    // 👇 Determine the grouping index dynamically based on groupBy label
-    const groupByIndex = cleanedOptions.findIndex(
-      (opt) => opt.name === this.groupBy
-    );
-
-    // Create a normalized key from a variant combo
-    const getVariantKey = (combo: string[]) =>
-      combo.map((v) => v?.trim().toLowerCase() || '').join('|');
-
-    // 🔒 Save all current variants by dynamic key
-    const existingVariantsMap: { [key: string]: any } = {};
-    this.variantGroups.forEach((group) => {
-      group.variants.forEach((variant) => {
-        const keyParts = cleanedOptions.map((opt) => {
-          const prop = opt.name.toLowerCase();
-          const value = variant[prop];
-          return value ? value.toLowerCase() : '';
-        });
-        const key = keyParts.join('|');
-        existingVariantsMap[key] = variant;
-      });
-    });
+    const groupByIndex = ['Size', 'Color', 'Material'].indexOf(this.groupBy);
 
     const grouped: { [key: string]: Variant[] } = {};
 
     combinations.forEach((combo, idx) => {
-      const key = getVariantKey(combo);
+      const groupKey = combo[groupByIndex];
+      if (!groupKey) return; // ⬅️ prevent undefined group
 
-      const groupKey =
-        groupByIndex >= 0 ? combo[groupByIndex] : `Group ${idx + 1}`;
+      const variant: Variant = {
+        price: this.product.price,
+        stock: 0,
+        image: '',
+        sku: `${combo.join('-')}-SKU${idx + 1}`,
+      };
 
-      let variant: Variant;
+      cleanedOptions.forEach((opt, i) => {
+        const key = opt.name.toLowerCase();
+        variant[key] = combo[i];
+      });
 
-      if (existingVariantsMap[key]) {
-        // ✅ Reuse existing variant
-        variant = { ...existingVariantsMap[key] };
-      } else {
-        // 🆕 New variant
-        variant = {
-          price: this.product.price,
-          stock: 0,
-          image: '',
-          sku: `${combo.join('-')}-SKU${idx + 1}`,
-        };
-
-        cleanedOptions.forEach((opt, i) => {
-          const prop = opt.name.toLowerCase();
-          variant[prop] = combo[i];
-        });
-      }
+      ['size', 'color', 'material'].forEach((key) => {
+        if (!variant[key]) variant[key] = '';
+      });
 
       if (!grouped[groupKey]) grouped[groupKey] = [];
       grouped[groupKey].push(variant);
