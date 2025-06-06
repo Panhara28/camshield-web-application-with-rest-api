@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { QuillModule } from 'ngx-quill';
 import { MultipleUploadComponent } from '../../../components/multiple-upload/multiple-upload.component';
+import { Variant } from '../../../models/variant.model';
 
 @Component({
   selector: 'app-create-product',
@@ -24,6 +25,12 @@ export class CreateProductComponent {
   @ViewChild('variantOptionsContainer', { static: false })
   variantOptionsContainer!: ElementRef;
   @ViewChild('groupBySelect', { static: false }) groupBySelect!: ElementRef;
+  variantGroups: {
+    label: string;
+    variants: any[];
+    expanded?: boolean; // Optional for toggling group visibility
+  }[] = [];
+  variantOptions: { id: string; name: string; values: string[] }[] = [];
 
   product: any = {
     title: '',
@@ -48,7 +55,6 @@ export class CreateProductComponent {
   margin: string = '';
   totalInventory: number = 0;
 
-  variantOptions: any[] = [];
   variantIdCounter: number = 0;
 
   updateProfitMargin() {
@@ -78,7 +84,6 @@ export class CreateProductComponent {
 
   addVariantOption() {
     const labels = ['Size', 'Color', 'Material'];
-
     const existingLabels = this.variantOptions
       .filter((opt) => opt !== null && opt.name)
       .map((opt) => opt.name);
@@ -90,59 +95,25 @@ export class CreateProductComponent {
       return;
     }
 
-    const optionIndex = this.variantOptions.length;
     const variantId = `variant-${Date.now()}`;
+    this.variantOptions.push({ name: nextLabel, values: [''], id: variantId });
+  }
+  removeVariantOption(index: number) {
+    this.variantOptions.splice(index, 1);
+    this.variantOptions = this.variantOptions.filter(
+      (opt) => opt && opt.values && opt.values.length > 0
+    );
+    this.generateVariants();
+  }
+  addOptionValue(index: number) {
+    this.variantOptions[index].values.push('');
+  }
 
-    this.variantOptions.push({ name: nextLabel, values: [], id: variantId });
-
-    const block = document.createElement('div');
-    block.className = 'mb-4 border p-3 rounded variant-option';
-    block.innerHTML = `
-      <label class="form-label">Option name</label>
-      <input type="text" class="form-control mb-2" value="${nextLabel}" disabled />
-      <label class="form-label">Option values</label>
-      <div class="variant-option-values" id="${variantId}">
-        <input type="text" class="form-control" placeholder="e.g., ${
-          nextLabel === 'Size' ? 'M' : nextLabel === 'Color' ? 'Red' : 'Leather'
-        }" />
-      </div>
-      <button class="btn btn-sm btn-outline-danger mt-2">Delete</button>
-      <button class="btn btn-sm btn-dark mt-2">Done</button>
-    `;
-
-    const container = this.variantOptionsContainer.nativeElement;
-    container.appendChild(block);
-
-    const inputContainer = block.querySelector(`#${variantId}`);
-    if (inputContainer) {
-      const firstInput = inputContainer.querySelector('input');
-      if (firstInput) {
-        firstInput.addEventListener('input', () =>
-          this.handleValueInput(
-            firstInput as HTMLInputElement,
-            variantId,
-            optionIndex
-          )
-        );
-      }
-    }
-
-    block
-      .querySelector('.btn-outline-danger')
-      ?.addEventListener('click', () => {
-        block.remove();
-        const indexToRemove = this.variantOptions.findIndex(
-          (opt) => opt?.id === variantId
-        );
-        if (indexToRemove > -1) {
-          this.variantOptions[indexToRemove] = null;
-        }
-        this.generateVariants();
-      });
-
-    block
-      .querySelector('.btn-dark')
-      ?.addEventListener('click', () => this.generateVariants());
+  handleOptionValueChange(index: number, valueIndex: number, value: string) {
+    this.variantOptions[index].values[valueIndex] = value;
+  }
+  trackByIndex(index: number, item: any): number {
+    return index;
   }
 
   handleValueInput(
@@ -176,68 +147,50 @@ export class CreateProductComponent {
 
   generateVariants() {
     const cleanedOptions = this.variantOptions.filter(
-      (opt) => opt && opt.name && opt.values.length
+      (opt) => opt && opt.name && opt.values && opt.values.length > 0
     );
+
+    if (cleanedOptions.length === 0) {
+      this.variantGroups = [];
+      return;
+    }
+
     const combinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
     const groupByIndex = ['Size', 'Color', 'Material'].indexOf(this.groupBy);
 
-    const grouped: { [key: string]: string[][] } = {};
-    combinations.forEach((comb) => {
-      const groupKey = comb[groupByIndex];
+    const grouped: { [key: string]: Variant[] } = {};
+
+    combinations.forEach((combo, idx) => {
+      const groupKey = combo[groupByIndex];
+      if (!groupKey) return; // ⬅️ prevent undefined group
+
+      const variant: Variant = {
+        price: this.product.price,
+        stock: 0,
+        image: '',
+        sku: `${combo.join('-')}-SKU${idx + 1}`,
+      };
+
+      cleanedOptions.forEach((opt, i) => {
+        const key = opt.name.toLowerCase();
+        variant[key] = combo[i];
+      });
+
+      ['size', 'color', 'material'].forEach((key) => {
+        if (!variant[key]) variant[key] = '';
+      });
+
       if (!grouped[groupKey]) grouped[groupKey] = [];
-      grouped[groupKey].push(comb);
+      grouped[groupKey].push(variant);
     });
 
-    const table = document.getElementById('variantTable');
-    if (!table) return;
-    table.innerHTML = '';
-
-    Object.entries(grouped).forEach(([group, variants], i) => {
-      const groupId = `group-${i}`;
-      const groupRow = document.createElement('tr');
-      groupRow.className = 'variant-group';
-      groupRow.innerHTML = `<td colspan="4">${group} (${variants.length} variants) ▾</td>`;
-      groupRow.addEventListener('click', () => {
-        const targets = document.querySelectorAll(
-          `.variant-rows[data-group='${groupId}']`
-        );
-        groupRow.classList.toggle('collapsed');
-        targets.forEach((el) => el.classList.toggle('d-none'));
-      });
-      table.appendChild(groupRow);
-
-      variants.forEach((comb, idx) => {
-        const label = comb
-          .filter((_, idx2) => idx2 !== groupByIndex)
-          .join(' / ');
-        const row = document.createElement('tr');
-        row.className = 'variant-rows';
-        row.setAttribute('data-group', groupId);
-        row.innerHTML = `
-          <td>${label}</td>
-          <td class="d-flex justify-content-center">
-             <div class="upload-box">
-              <i class="fa fa-image upload-icon"></i>
-            </div>
-          </td>
-          <td><input type="number" class="form-control" /></td>
-          <td><input type="number" class="form-control" /></td>
-        `;
-
-        row
-          .querySelector('input[type="file"]')
-          ?.addEventListener('change', (e: any) =>
-            this.previewVariantImage(e.target)
-          );
-        row
-          .querySelectorAll('input[type="number"]')[1]
-          ?.addEventListener('input', () => this.updateInventoryTotal());
-
-        table.appendChild(row);
-      });
-    });
+    this.variantGroups = Object.entries(grouped).map(([label, variants]) => ({
+      label,
+      variants,
+      expanded: true,
+    }));
 
     this.updateInventoryTotal();
   }
@@ -334,5 +287,10 @@ export class CreateProductComponent {
 
   onMediaUrlsChanged(mediaList: any[]) {
     this.product.mediaUrls = mediaList; // ⬅ store full media object, not just URLs
+  }
+
+  openVariantMediaModal(variant: any) {
+    console.log('🖼️ Open modal to select media for variant:', variant);
+    // You can integrate your media modal here and assign the selected image to `variant.image`
   }
 }

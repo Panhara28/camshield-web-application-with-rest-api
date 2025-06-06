@@ -121,7 +121,64 @@
         <!-- Variants Section -->
         <div class="card">
           <h5>Variants</h5>
-          <div #variantOptionsContainer id="variant-options"></div>
+          <div id="variant-options">
+            <div
+              *ngFor="let option of variantOptions; let i = index"
+              class="mb-4 border p-3 rounded variant-option"
+            >
+              <label class="form-label">Option name</label>
+              <input
+                type="text"
+                class="form-control mb-2"
+                [value]="option.name"
+                disabled
+              />
+
+              <label class="form-label">Option values</label>
+              <div class="variant-option-values" [id]="option.id">
+                <div
+                  *ngFor="
+                    let value of option.values;
+                    let j = index;
+                    trackBy: trackByIndex
+                  "
+                >
+                  <input
+                    type="text"
+                    class="form-control mb-2"
+                    [placeholder]="
+                      option.name === 'Size'
+                        ? 'e.g. M'
+                        : option.name === 'Color'
+                        ? 'e.g. Red'
+                        : 'e.g. Leather'
+                    "
+                    [ngModel]="variantOptions[i].values[j]"
+                    (ngModelChange)="handleOptionValueChange(i, j, $event)"
+                  />
+                </div>
+              </div>
+
+              <button
+                class="btn btn-sm btn-outline-secondary mt-2"
+                (click)="addOptionValue(i)"
+              >
+                + Add Value
+              </button>
+              <button
+                class="btn btn-sm btn-outline-danger mt-2 ms-2"
+                (click)="removeVariantOption(i)"
+              >
+                Delete
+              </button>
+              <button
+                class="btn btn-sm btn-dark mt-2 ms-2"
+                (click)="generateVariants()"
+              >
+                Done
+              </button>
+            </div>
+          </div>
           <button class="btn btn-outline-primary" (click)="addVariantOption()">
             Add another option
           </button>
@@ -149,7 +206,50 @@
                   <th>Available</th>
                 </tr>
               </thead>
-              <tbody id="variantTable"></tbody>
+              <tbody>
+                <ng-container *ngFor="let group of variantGroups">
+                  <tr
+                    class="variant-group"
+                    (click)="group.expanded = !group.expanded"
+                  >
+                    <td colspan="4">
+                      {{ group.label }} ({{ group.variants.length }} variants) ▾
+                    </td>
+                  </tr>
+                  <tr
+                    *ngFor="let variant of group.variants"
+                    [class.d-none]="!group.expanded"
+                  >
+                    <td>
+                      {{ variant.size || "" }} {{ variant.color || "" }}
+                      {{ variant.material || "" }}
+                    </td>
+                    <td>
+                      <div
+                        class="upload-box"
+                        (click)="openVariantMediaModal(variant)"
+                      >
+                        <i class="fa fa-image upload-icon"></i>
+                      </div>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="variant.price"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="variant.stock"
+                        (input)="updateInventoryTotal()"
+                      />
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
             </table>
             <div class="text-end fw-bold">
               Total inventory: {{ totalInventory }}
