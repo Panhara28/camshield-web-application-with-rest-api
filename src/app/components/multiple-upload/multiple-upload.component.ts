@@ -19,6 +19,7 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { ImageDetailComponent } from '../image-detail/image-detail.component';
+import { MediaLibraryModalComponent } from '../media-library-modal/media-library-modal.component';
 
 interface PaginationMeta {
   page?: number;
@@ -30,7 +31,13 @@ interface PaginationMeta {
 @Component({
   selector: 'app-multiple-upload',
   standalone: true,
-  imports: [CommonModule, CdkDrag, CdkDropList, ImageDetailComponent],
+  imports: [
+    CommonModule,
+    CdkDrag,
+    CdkDropList,
+    ImageDetailComponent,
+    MediaLibraryModalComponent,
+  ],
   templateUrl: './multiple-upload.component.html',
   styleUrl: './multiple-upload.component.css',
 })
@@ -217,10 +224,7 @@ export class MultipleUploadComponent {
     }
   }
 
-  onModalFileSelected(event: any) {
-    const files: FileList | null = event.target.files;
-    if (!files) return;
-
+  onModalFileSelected(files: FileList) {
     const uploadFiles = Array.from(files);
 
     this.multipleUploadService.uploadFiles('multiple', uploadFiles).subscribe({
@@ -231,20 +235,20 @@ export class MultipleUploadComponent {
             this.confirmedMediaUrls.add(url);
             this.selectedMediaUrls.add(url);
           }
-
-          this.loadMediaList(); // ✅ reload with full metadata
+          this.loadMediaList(); // refresh media list from server
         }
       },
       error: (err) => console.error('Modal upload error:', err),
     });
   }
 
-  onModalConfirmSelection() {
-    this.confirmedMediaUrls = new Set(this.selectedMediaUrls);
+  onModalConfirmSelection(selectedUrls: string[]) {
+    this.selectedMediaUrls = new Set(selectedUrls);
+    this.confirmedMediaUrls = new Set(selectedUrls);
     this.confirmedMediaList = this.medias.filter((m: any) =>
       this.confirmedMediaUrls.has(m.url)
     );
-    this.mediaUrlsChanged.emit(this.confirmedMediaList); // ⬅ Emit full media objects
+    this.mediaUrlsChanged.emit(this.confirmedMediaList); // emit updated selection to parent
   }
 
   get allMediaUrls(): string[] {
