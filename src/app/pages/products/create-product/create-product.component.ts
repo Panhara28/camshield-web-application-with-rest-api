@@ -1,4 +1,10 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { LayoutsComponent } from '../../../components/layouts/layouts.component';
 import { PageTitleComponent } from '../../../components/page-title/page-title.component';
 import { CommonModule } from '@angular/common';
@@ -6,6 +12,16 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { QuillModule } from 'ngx-quill';
 import { MultipleUploadComponent } from '../../../components/multiple-upload/multiple-upload.component';
 import { Variant } from '../../../models/variant.model';
+import { SingleMediaLibraryComponent } from '../../../components/single-media-library/single-media-library.component';
+import { ActivatedRoute } from '@angular/router';
+import { MediaService } from '../../../services/medias.service';
+
+interface PaginationMeta {
+  page?: number;
+  totalPages?: number;
+  total?: number;
+  limit?: number;
+}
 
 @Component({
   selector: 'app-create-product',
@@ -17,6 +33,7 @@ import { Variant } from '../../../models/variant.model';
     FormsModule,
     QuillModule,
     MultipleUploadComponent,
+    SingleMediaLibraryComponent,
   ],
   templateUrl: './create-product.component.html',
   styleUrl: './create-product.component.css',
@@ -31,6 +48,12 @@ export class CreateProductComponent {
     expanded?: boolean; // Optional for toggling group visibility
   }[] = [];
   variantOptions: { id: string; name: string; values: string[] }[] = [];
+  selectedMediaUrls: Set<string> = new Set();
+  confirmedMediaUrls: Set<string> = new Set();
+  confirmedMediaList: any[] = [];
+  medias: any = [];
+  meta: PaginationMeta = { page: 1, limit: 20, totalPages: 1, total: 0 };
+  currentVariantForImage: any = null;
 
   product: any = {
     title: '',
@@ -54,8 +77,23 @@ export class CreateProductComponent {
   profit: string = '';
   margin: string = '';
   totalInventory: number = 0;
-
   variantIdCounter: number = 0;
+  @Output() mediaUrlsChanged = new EventEmitter<any[]>();
+  multipleUploadService: any;
+
+  constructor(
+    private route: ActivatedRoute,
+    private mediaService: MediaService
+  ) {}
+
+  ngOnInit() {
+    this.route.queryParams.subscribe((params) => {
+      this.mediaService.getMedias(params).subscribe((res) => {
+        this.medias = res.data;
+        this.meta = res.meta;
+      });
+    });
+  }
 
   updateProfitMargin() {
     const price = this.product.price;
@@ -290,7 +328,51 @@ export class CreateProductComponent {
   }
 
   openVariantMediaModal(variant: any) {
-    console.log('🖼️ Open modal to select media for variant:', variant);
+    this.currentVariantForImage = variant;
+
     // You can integrate your media modal here and assign the selected image to `variant.image`
+  }
+
+  onModalConfirmSelection(selectedUrls: string[]) {
+    const selectedUrl = selectedUrls[0];
+    if (this.currentVariantForImage) {
+      this.currentVariantForImage.image = selectedUrl;
+      this.currentVariantForImage = null; // reset
+    }
+  }
+
+  onModalFileSelected(files: FileList) {
+    const uploadFiles = Array.from(files);
+
+    this.multipleUploadService.uploadFiles('multiple', uploadFiles).subscribe({
+      next: (event: any) => {
+        if (event?.body !== undefined) {
+          for (let i = 0; i < event.body.length; i++) {
+            const url = event.body[i].url;
+            this.confirmedMediaUrls.add(url);
+            this.selectedMediaUrls.add(url);
+          }
+          this.loadMediaList(); // refresh media list from server
+        }
+      },
+      error: (err: any) => console.error('Modal upload error:', err),
+    });
+  }
+
+  private loadMediaList() {
+    const params = this.route.snapshot.queryParams;
+    this.mediaService.getMedias(params).subscribe({
+      next: (res: any) => {
+        console.log(res);
+        this.medias = res.data;
+        this.meta = res.meta;
+
+        // Refresh confirmedMediaList from confirmedMediaUrls
+        this.confirmedMediaList = this.medias.filter((m: any) =>
+          this.confirmedMediaUrls.has(m.url)
+        );
+      },
+      error: (err) => console.error('Failed to fetch medias:', err),
+    });
   }
 }

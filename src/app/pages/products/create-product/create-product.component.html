@@ -225,15 +225,40 @@
                       {{ variant.material || "" }}
                     </td>
                     <td>
+                      <!-- Show upload icon box only when image is NOT selected -->
                       <div
                         class="upload-box"
+                        *ngIf="!variant.image"
                         data-bs-toggle="modal"
-                        data-bs-target="#mediaModal"
+                        data-bs-target="#singleMediaModal"
                         (click)="openVariantMediaModal(variant)"
                       >
                         <i class="fa fa-image upload-icon"></i>
                       </div>
+
+                      <!-- Show image if selected -->
+                      <div
+                        *ngIf="variant.image"
+                        class="position-relative"
+                        style="width: 140px; height: 140px"
+                      >
+                        <img
+                          [src]="variant.image"
+                          alt="Selected Variant"
+                          class="img-thumbnail"
+                          style="width: 100%; height: 100%; object-fit: cover"
+                        />
+                        <!-- Optional: Click to change image -->
+                        <div
+                          class="position-absolute top-0 start-0 w-100 h-100"
+                          data-bs-toggle="modal"
+                          data-bs-target="#singleMediaModal"
+                          style="cursor: pointer"
+                          (click)="openVariantMediaModal(variant)"
+                        ></div>
+                      </div>
                     </td>
+
                     <td>
                       <input
                         type="number"
@@ -312,3 +337,9 @@
     </div>
   </div>
 </app-layouts>
+
+<app-single-media-library
+  [medias]="medias"
+  (confirmSelection)="onModalConfirmSelection($event)"
+  (uploadSelectedFiles)="onModalFileSelected($event)"
+></app-single-media-library>

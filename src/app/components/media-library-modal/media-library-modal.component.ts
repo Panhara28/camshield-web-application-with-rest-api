@@ -1,4 +1,3 @@
-// src/app/components/media-library-modal/media-library-modal.component.ts
 import {
   Component,
   EventEmitter,
