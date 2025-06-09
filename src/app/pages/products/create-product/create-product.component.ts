@@ -143,16 +143,16 @@ export class CreateProductComponent {
     );
     this.generateVariants();
   }
-  addOptionValue(index: number) {
-    this.variantOptions[index].values.push('');
-  }
+  // addOptionValue(index: number) {
+  //   this.variantOptions[index].values.push('');
+  // }
 
   handleOptionValueChange(index: number, valueIndex: number, value: string) {
     this.variantOptions[index].values[valueIndex] = value;
   }
-  trackByIndex(index: number, item: any): number {
-    return index;
-  }
+  // trackByIndex(index: number, item: any): number {
+  //   return index;
+  // }
 
   handleValueInput(
     input: HTMLInputElement,
@@ -246,13 +246,13 @@ export class CreateProductComponent {
     }
   }
 
-  cartesian(arr: string[][]): string[][] {
-    return arr.reduce(
-      (a, b) =>
-        a.flatMap((d) => b.map((e) => (Array.isArray(d) ? [...d, e] : [d, e]))),
-      [[]] as string[][]
-    );
-  }
+  // cartesian(arr: string[][]): string[][] {
+  //   return arr.reduce(
+  //     (a, b) =>
+  //       a.flatMap((d) => b.map((e) => (Array.isArray(d) ? [...d, e] : [d, e]))),
+  //     [[]] as string[][]
+  //   );
+  // }
 
   updateInventoryTotal() {
     const inputs = document.querySelectorAll<HTMLInputElement>(
@@ -273,7 +273,7 @@ export class CreateProductComponent {
     );
 
     // Build variants
-    const groupByIndex = ['Size', 'Color', 'Material'].indexOf(this.groupBy);
+    // const groupByIndex = ['Size', 'Color', 'Material'].indexOf(this.groupBy);
     const variants = combinations.map((combo, idx) => {
       const variant: any = {
         price:
@@ -374,5 +374,173 @@ export class CreateProductComponent {
       },
       error: (err) => console.error('Failed to fetch medias:', err),
     });
+  }
+
+  // Here
+
+  defaultVariantOptions = ['Size', 'Color', 'Material'];
+  usedOptions: Set<string> = new Set();
+  variantValues: { [key: string]: string[] } = {};
+  groupedVariantData: { [key: string]: any[] } = {};
+  collapsedGroups: Set<string> = new Set();
+
+  variantDetailMap:
+    | {
+        [key: string]: { price: number; available: number; image_url: string };
+      }
+    | any = {};
+
+  get usedOptionsArray(): string[] {
+    return Array.from(this.usedOptions);
+  }
+
+  addOption() {
+    const nextOption = this.defaultVariantOptions.find(
+      (opt) => !this.usedOptions.has(opt)
+    );
+    if (!nextOption) return;
+    this.usedOptions.add(nextOption);
+    this.variantValues[nextOption] = [''];
+  }
+
+  removeOption(option: string) {
+    this.usedOptions.delete(option);
+    delete this.variantValues[option];
+  }
+
+  addOptionValue(option: string) {
+    this.variantValues[option].push('');
+  }
+
+  removeOptionValue(option: string, index: number) {
+    this.variantValues[option].splice(index, 1);
+  }
+
+  updateOptionValue(option: string, index: number, event: Event | any) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.trim();
+    this.variantValues[option][index] = value;
+  }
+
+  trackByIndex(index: number, item: any): number {
+    return index;
+  }
+
+  private cartesian(arr: string[][]): string[][] {
+    return arr.reduce(
+      (acc, curr) =>
+        acc
+          .map((x) => curr.map((y) => x.concat(y)))
+          .reduce((a, b) => a.concat(b), []),
+      [[]] as string[][]
+    );
+  }
+
+  generateGroupedVariantsObject() {
+    const cleanedOptions = this.usedOptionsArray
+      .filter((opt) => this.variantValues[opt]?.length)
+      .map((opt) => ({
+        name: opt,
+        values: this.variantValues[opt].filter((val) => val.trim() !== ''),
+      }));
+
+    if (cleanedOptions.length < 1) return;
+
+    const optionNames = cleanedOptions.map((opt) => opt.name);
+    const optionValues = cleanedOptions.map((opt) => opt.values);
+
+    const newCombinations = this.cartesian(optionValues);
+
+    // Preserve old combinations before rebuild
+    const oldCombinations = Object.keys(this.variantDetailMap).map((k) =>
+      k.split('||')
+    );
+    this.preserveVariantDetails(oldCombinations, newCombinations, optionNames);
+
+    const groupBy = optionNames[0];
+    const groupIndex = optionNames.indexOf(groupBy);
+
+    const grouped: { [key: string]: any[] } = {};
+
+    newCombinations.forEach((combo) => {
+      const variantObj: { [key: string]: any } = {};
+      combo.forEach((value, idx) => {
+        variantObj[optionNames[idx]] = value;
+      });
+
+      const key = combo.join('||');
+      Object.assign(variantObj, this.variantDetailMap[key]);
+
+      const groupKey = combo[groupIndex];
+      if (!grouped[groupKey]) grouped[groupKey] = [];
+      grouped[groupKey].push(variantObj);
+    });
+
+    this.groupedVariantData = grouped;
+  }
+
+  private getVariantKey(variant: { [key: string]: string }): string {
+    return this.usedOptionsArray.map((opt) => variant[opt]).join('||');
+  }
+
+  updateVariantDetail(
+    variant: any,
+    field: 'price' | 'available' | 'image_url',
+    value: any
+  ) {
+    const key = this.getVariantKey(variant);
+    if (!this.variantDetailMap[key]) {
+      this.variantDetailMap[key] = { price: 0, available: 0, image_url: '' };
+    }
+    this.variantDetailMap[key][field] = value;
+  }
+
+  toggleGroupCollapse(groupKey: string) {
+    if (this.collapsedGroups.has(groupKey)) {
+      this.collapsedGroups.delete(groupKey);
+    } else {
+      this.collapsedGroups.add(groupKey);
+    }
+  }
+
+  isGroupCollapsed(groupKey: string): boolean {
+    return this.collapsedGroups.has(groupKey);
+  }
+
+  preserveVariantDetails(
+    oldCombinations: string[][],
+    newCombinations: string[][],
+    optionNames: string[]
+  ) {
+    const newMap: { [key: string]: any } = {};
+
+    newCombinations.forEach((combo) => {
+      const key = combo.join('||');
+
+      // Try to find a matching combo from old combinations (ignoring new options)
+      for (const old of oldCombinations) {
+        let match = true;
+        for (let i = 0; i < old.length; i++) {
+          if (combo[i] !== old[i]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          const oldKey = old.join('||');
+          newMap[key] = this.variantDetailMap[oldKey] || {
+            price: 0,
+            available: 0,
+            image_url: '',
+          };
+          return;
+        }
+      }
+
+      // No match found, use default
+      newMap[key] = { price: 0, available: 0, image_url: '' };
+    });
+
+    this.variantDetailMap = newMap;
   }
 }
