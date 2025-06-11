@@ -74,3 +74,13 @@
 .child-variant {
   display: none;
 }
+
+.snack-success {
+  background-color: #4caf50; /* green */
+  color: #fff;
+}
+
+.snack-error {
+  background-color: #f44336; /* red */
+  color: #fff;
+}

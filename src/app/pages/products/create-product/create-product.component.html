@@ -39,15 +39,24 @@
             ></app-multiple-upload>
           </div>
           <div class="mb-3">
-            <label class="form-label">Choose a product category</label>
-            <select class="form-select" [(ngModel)]="product.category">
-              <option>Apparel</option>
-              <option>Electronics</option>
-              <option>Home & Garden</option>
-            </select>
-            <small class="text-muted"
-              >Categories affect taxes and metafields</small
-            >
+            <mat-form-field appearance="fill" class="w-100">
+              <mat-label>Choose a product category</mat-label>
+              <mat-select [(ngModel)]="product.categoryId">
+                <ng-container *ngFor="let group of topLevelCategories">
+                  <mat-optgroup [label]="group.name">
+                    <mat-option [value]="group.id">{{ group.name }}</mat-option>
+
+                    <ng-container
+                      *ngFor="let child of getAllDescendants(group)"
+                    >
+                      <mat-option [value]="child.id">
+                        {{ "—".repeat(child.level) }} {{ child.name }}
+                      </mat-option>
+                    </ng-container>
+                  </mat-optgroup>
+                </ng-container>
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
 
