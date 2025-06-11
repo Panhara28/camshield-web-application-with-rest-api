@@ -54,6 +54,7 @@ export class CreateProductComponent {
   medias: any = [];
   meta: PaginationMeta = { page: 1, limit: 20, totalPages: 1, total: 0 };
   currentVariantForImage: any = null;
+  showVariantsTable: boolean = false;
 
   product: any = {
     title: '',
@@ -80,7 +81,11 @@ export class CreateProductComponent {
   variantIdCounter: number = 0;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
   multipleUploadService: any;
-
+  defaultVariantOptions = ['Size', 'Color', 'Material'];
+  usedOptions: Set<string> = new Set();
+  variantValues: { [key: string]: string[] } = {};
+  groupedVariantData: { [key: string]: any[] } = {};
+  collapsedGroups: Set<string> = new Set();
   constructor(
     private route: ActivatedRoute,
     private mediaService: MediaService
@@ -143,16 +148,10 @@ export class CreateProductComponent {
     );
     this.generateVariants();
   }
-  // addOptionValue(index: number) {
-  //   this.variantOptions[index].values.push('');
-  // }
 
   handleOptionValueChange(index: number, valueIndex: number, value: string) {
     this.variantOptions[index].values[valueIndex] = value;
   }
-  // trackByIndex(index: number, item: any): number {
-  //   return index;
-  // }
 
   handleValueInput(
     input: HTMLInputElement,
@@ -246,14 +245,6 @@ export class CreateProductComponent {
     }
   }
 
-  // cartesian(arr: string[][]): string[][] {
-  //   return arr.reduce(
-  //     (a, b) =>
-  //       a.flatMap((d) => b.map((e) => (Array.isArray(d) ? [...d, e] : [d, e]))),
-  //     [[]] as string[][]
-  //   );
-  // }
-
   updateInventoryTotal() {
     const inputs = document.querySelectorAll<HTMLInputElement>(
       '#variantTable input[type="number"]:nth-child(4)'
@@ -264,45 +255,38 @@ export class CreateProductComponent {
   }
 
   submitProductForm() {
-    // Extract size/color/material combinations
-    const cleanedOptions = this.variantOptions.filter(
-      (opt) => opt && opt.name && opt.values.length
-    );
+    const cleanedOptions = this.usedOptionsArray
+      .filter((opt) => this.variantValues[opt]?.length)
+      .map((opt) => ({
+        name: opt,
+        values: this.variantValues[opt].filter((val) => val.trim() !== ''),
+      }));
+
     const combinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
+    const optionNames = cleanedOptions.map((opt) => opt.name);
 
-    // Build variants
-    // const groupByIndex = ['Size', 'Color', 'Material'].indexOf(this.groupBy);
     const variants = combinations.map((combo, idx) => {
-      const variant: any = {
-        price:
-          (
-            document.querySelectorAll(`#variantTable input[type='number']`)[
-              idx * 2
-            ] as HTMLInputElement
-          )?.valueAsNumber || this.product.price,
-        compareAtPrice: this.product.compareAtPrice,
-        costPerItem: this.product.costPerItem,
-        stock:
-          (
-            document.querySelectorAll(`#variantTable input[type='number']`)[
-              idx * 2 + 1
-            ] as HTMLInputElement
-          )?.valueAsNumber || 0,
-        sku: `${combo.join('-')}-SKU${idx + 1}`,
+      const variant: any = {};
+
+      combo.forEach((value, i) => {
+        const key = optionNames[i].toLowerCase(); // 🔽 make it lowercase
+        variant[key] = value;
+      });
+
+      const variantKey = combo.join('||');
+      const details = this.variantDetailMap[variantKey] || {
+        price: 0,
+        stock: 0,
         imageVariant: '',
       };
-      cleanedOptions.forEach((opt, i) => {
-        const key = opt.name.toLowerCase();
-        variant[key] = combo[i] || '';
-      });
-      // Ensure missing fields are filled with empty strings
-      ['size', 'color', 'material'].forEach((key) => {
-        if (!variant[key]) {
-          variant[key] = '';
-        }
-      });
+
+      variant.price = details.price;
+      variant.stock = details.stock;
+      variant.imageVariant = details.imageVariant;
+      variant.sku = `${combo.join('-')}-SKU${idx + 1}`;
+
       return variant;
     });
 
@@ -318,9 +302,8 @@ export class CreateProductComponent {
       variants,
       mediaUrls: this.product.mediaUrls,
     };
-    console.log('🛰️ Medias:', this.product.mediaUrls);
 
-    console.log('🛰️ SUBMIT PAYLOAD TO API:', payload);
+    console.log('🛰️ Final Product Payload:', payload);
   }
 
   onMediaUrlsChanged(mediaList: any[]) {
@@ -329,15 +312,26 @@ export class CreateProductComponent {
 
   openVariantMediaModal(variant: any) {
     this.currentVariantForImage = variant;
+    console.log('🔍 Modal opened for variant:', variant);
 
     // You can integrate your media modal here and assign the selected image to `variant.image`
   }
 
   onModalConfirmSelection(selectedUrls: string[]) {
     const selectedUrl = selectedUrls[0];
-    if (this.currentVariantForImage) {
-      this.currentVariantForImage.image = selectedUrl;
-      this.currentVariantForImage = null; // reset
+    console.log('✅ Confirmed image URL:', selectedUrl);
+    console.log(
+      '📦 Current variant before update:',
+      this.currentVariantForImage
+    );
+    if (this.currentVariantForImage && selectedUrl) {
+      this.updateVariantDetail(
+        this.currentVariantForImage,
+        'imageVariant',
+        selectedUrl
+      );
+      console.log('📝 Image assigned to variant');
+      this.currentVariantForImage = null;
     }
   }
 
@@ -378,15 +372,13 @@ export class CreateProductComponent {
 
   // Here
 
-  defaultVariantOptions = ['Size', 'Color', 'Material'];
-  usedOptions: Set<string> = new Set();
-  variantValues: { [key: string]: string[] } = {};
-  groupedVariantData: { [key: string]: any[] } = {};
-  collapsedGroups: Set<string> = new Set();
-
   variantDetailMap:
     | {
-        [key: string]: { price: number; available: number; image_url: string };
+        [key: string]: {
+          price: number;
+          stock: number;
+          imageVariant: string;
+        };
       }
     | any = {};
 
@@ -476,23 +468,26 @@ export class CreateProductComponent {
       grouped[groupKey].push(variantObj);
     });
 
+    this.showVariantsTable = this.hasValidVariants(); // only show table if valid
+
     this.groupedVariantData = grouped;
   }
 
-  private getVariantKey(variant: { [key: string]: string }): string {
+  getVariantKey(variant: { [key: string]: string }): string {
     return this.usedOptionsArray.map((opt) => variant[opt]).join('||');
   }
 
   updateVariantDetail(
     variant: any,
-    field: 'price' | 'available' | 'image_url',
+    field: 'price' | 'stock' | 'imageVariant',
     value: any
   ) {
     const key = this.getVariantKey(variant);
     if (!this.variantDetailMap[key]) {
-      this.variantDetailMap[key] = { price: 0, available: 0, image_url: '' };
+      this.variantDetailMap[key] = { price: 0, stock: 0, imageVariant: '' };
     }
     this.variantDetailMap[key][field] = value;
+    console.log(`✅ Updated ${field} of ${key} to:`, value);
   }
 
   toggleGroupCollapse(groupKey: string) {
@@ -530,17 +525,23 @@ export class CreateProductComponent {
           const oldKey = old.join('||');
           newMap[key] = this.variantDetailMap[oldKey] || {
             price: 0,
-            available: 0,
-            image_url: '',
+            stock: 0,
+            imageVariant: '',
           };
           return;
         }
       }
 
       // No match found, use default
-      newMap[key] = { price: 0, available: 0, image_url: '' };
+      newMap[key] = { price: 0, stock: 0, imageVariant: '' };
     });
 
     this.variantDetailMap = newMap;
+  }
+
+  hasValidVariants(): boolean {
+    return this.usedOptionsArray.some((opt) =>
+      this.variantValues[opt]?.some((val) => val.trim() !== '')
+    );
   }
 }
