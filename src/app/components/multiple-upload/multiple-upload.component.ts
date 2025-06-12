@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  Input,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -60,6 +61,8 @@ export class MultipleUploadComponent {
   selectedImageDetail: any = null;
   isImagePopupOpen = false;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
+  @Input() mediaUrls: any = undefined;
+  @Input() mutateStatus: boolean = false;
 
   uploadedFiles: {
     file: File;
@@ -109,11 +112,15 @@ export class MultipleUploadComponent {
   }
 
   drop(event: CdkDragDrop<any[]>) {
-    moveItemInArray(
-      this.confirmedMediaList,
-      event.previousIndex,
-      event.currentIndex
-    );
+    if (this.mutateStatus) {
+      moveItemInArray(this.mediaUrls, event.previousIndex, event.currentIndex);
+    } else {
+      moveItemInArray(
+        this.confirmedMediaList,
+        event.previousIndex,
+        event.currentIndex
+      );
+    }
   }
 
   onFileDropped(event: DragEvent) {
@@ -308,18 +315,36 @@ export class MultipleUploadComponent {
   }
 
   getExtraCount(): number {
-    const total = this.confirmedMediaList.length;
-    if (total <= 1) return 0;
+    if (this.mutateStatus) {
+      const total = this.mediaUrls.length;
+      if (total <= 1) return 0;
 
-    const remaining = total - 0; // exclude the first image
-    return remaining > this.maxThumbnails ? remaining - this.maxThumbnails : 0;
+      const remaining = total - 0; // exclude the first image
+      return remaining > this.maxThumbnails
+        ? remaining - this.maxThumbnails
+        : 0;
+    } else {
+      const total = this.confirmedMediaList.length;
+      if (total <= 1) return 0;
+
+      const remaining = total - 0; // exclude the first image
+      return remaining > this.maxThumbnails
+        ? remaining - this.maxThumbnails
+        : 0;
+    }
   }
 
   clearSelectedMedia(): void {
-    // Remove from main medias array
-    this.medias = this.medias.filter(
-      (media: any) => !this.checkedMediaUrls.has(media.url)
-    );
+    if (this.mutateStatus) {
+      this.mediaUrls = this.mediaUrls.filter(
+        (media: any) => !this.checkedMediaUrls.has(media.url)
+      );
+    } else {
+      // Remove from main medias array
+      this.medias = this.medias.filter(
+        (media: any) => !this.checkedMediaUrls.has(media.url)
+      );
+    }
 
     // Remove from confirmedMediaUrls set
     for (const url of this.checkedMediaUrls) {
@@ -336,9 +361,13 @@ export class MultipleUploadComponent {
   }
 
   getFirstConfirmedMedia(): any | null {
-    return this.confirmedMediaList.length > 0
-      ? this.confirmedMediaList[0]
-      : null;
+    if (this.mutateStatus) {
+      return this.mediaUrls.length > 0 ? this.mediaUrls[0] : null;
+    } else {
+      return this.confirmedMediaList.length > 0
+        ? this.confirmedMediaList[0]
+        : null;
+    }
   }
   onMediaClicked(media: any): void {
     this.selectedImageDetail = media;

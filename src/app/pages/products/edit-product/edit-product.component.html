@@ -35,6 +35,8 @@
           </div>
           <div class="mb-3">
             <app-multiple-upload
+              [mutateStatus]="true"
+              [mediaUrls]="product?.MediaProductDetails"
               (mediaUrlsChanged)="onMediaUrlsChanged($event)"
             ></app-multiple-upload>
           </div>

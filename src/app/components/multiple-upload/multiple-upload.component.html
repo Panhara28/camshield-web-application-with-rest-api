@@ -1,4 +1,7 @@
-<div class="media-upload-box" *ngIf="allMediaUrls.length === 0">
+<div
+  class="media-upload-box"
+  *ngIf="mutateStatus ? mediaUrls.length === 0 : allMediaUrls.length === 0"
+>
   <label class="media-upload-label">Media</label>
   <div class="media-upload-zone">
     <div class="upload-buttons">
@@ -26,7 +29,7 @@
 <!-- Thumbnail Gallery -->
 <div
   cdkDropList
-  [cdkDropListData]="getConfirmedMediaList()"
+  [cdkDropListData]="mutateStatus ? mediaUrls : getConfirmedMediaList()"
   (cdkDropListDropped)="drop($event)"
   cdkDropListOrientation="mixed"
 >
@@ -35,7 +38,7 @@
     <div class="row">
       <div
         class="d-flex align-items-center justify-content-between mb-2 p-0"
-        *ngIf="checkedMediaUrls.size > 0"
+        *ngIf="mutateStatus ? mediaUrls.length > 0 : checkedMediaUrls.size > 0"
       >
         <div class="d-flex align-items-center gap-2">
           <div
@@ -45,7 +48,8 @@
             <i class="fa fa-minus" style="font-size: 12px"></i>
           </div>
           <span class="text-muted">
-            {{ checkedMediaUrls.size }} files selected
+            {{ mutateStatus ? mediaUrls.length : checkedMediaUrls.size }} files
+            selected
           </span>
         </div>
 
@@ -76,7 +80,10 @@
       <div class="col-md-8 pe-0">
         <div class="row g-3">
           <ng-container
-            *ngFor="let media of getConfirmedMediaList(); let i = index"
+            *ngFor="
+              let media of mutateStatus ? mediaUrls : getConfirmedMediaList();
+              let i = index
+            "
           >
             <div class="col-6 col-md-3" (click)="onMediaClicked(media)" cdkDrag>
               <div
@@ -129,7 +136,11 @@
           <!-- "+" button -->
           <div class="col-6 col-md-3">
             <div
-              *ngIf="confirmedMediaUrls.size > 0"
+              *ngIf="
+                mutateStatus
+                  ? mediaUrls.length > 0
+                  : confirmedMediaUrls.size > 0
+              "
               class="card small-card d-flex justify-content-center align-items-center border rounded-3 border-secondary-subtle"
               style="cursor: pointer"
               data-bs-toggle="modal"

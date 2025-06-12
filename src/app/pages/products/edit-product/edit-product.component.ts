@@ -88,7 +88,6 @@ export class EditProductComponent {
   profit: string = '';
   margin: string = '';
   totalInventory: number = 0;
-
   constructor(
     private route: ActivatedRoute,
     private mediaService: MediaService,
@@ -102,7 +101,16 @@ export class EditProductComponent {
     this.fetchCategories();
     this.route.params.subscribe((params) => {
       const slug = params['id'];
-      if (slug) this.loadProduct(slug);
+      if (slug) {
+        this.productDetailService.getProductDetailBySlug(slug).subscribe({
+          next: (res: any) => {
+            this.product = { ...res };
+            this.populateVariantState(res.variants);
+            this.updateProfitMargin();
+          },
+          error: (err: any) => console.error('Failed to load product:', err),
+        });
+      }
     });
 
     this.route.queryParams.subscribe((params) => {
@@ -110,17 +118,6 @@ export class EditProductComponent {
         this.medias = res.data;
         this.meta = res.meta;
       });
-    });
-  }
-
-  loadProduct(slug: string): void {
-    this.productDetailService.getProductDetailBySlug(slug).subscribe({
-      next: (res: any) => {
-        this.product = { ...res };
-        this.populateVariantState(res.variants);
-        this.updateProfitMargin();
-      },
-      error: (err: any) => console.error('Failed to load product:', err),
     });
   }
 
