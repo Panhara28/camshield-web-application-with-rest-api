@@ -13,7 +13,7 @@ import { QuillModule } from 'ngx-quill';
 import { MultipleUploadComponent } from '../../../components/multiple-upload/multiple-upload.component';
 import { Variant } from '../../../models/variant.model';
 import { SingleMediaLibraryComponent } from '../../../components/single-media-library/single-media-library.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MediaService } from '../../../services/medias.service';
 import { CreateProductService } from '../../../services/create-product.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -105,7 +105,8 @@ export class CreateProductComponent {
     private mediaService: MediaService,
     private createProductService: CreateProductService,
     private snackBar: MatSnackBar,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -358,11 +359,15 @@ export class CreateProductComponent {
     };
 
     this.createProductService.createProduct(payload).subscribe({
-      next: () =>
+      next: (res: any) => {
         this.snackBar.open('✅ Product created successfully!', 'Close', {
           duration: 3000,
           panelClass: ['snack-success'],
-        }),
+        });
+
+        // Redirect to edit page
+        this.router.navigate([`/products/${res.slug}/edit`]);
+      },
       error: () =>
         this.snackBar.open(
           '❌ Failed to create product. Please try again.',

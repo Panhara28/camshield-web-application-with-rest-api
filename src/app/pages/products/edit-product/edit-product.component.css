@@ -1,0 +1,86 @@
+.card {
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #fff;
+}
+.form-control,
+.form-check-input {
+  border-radius: 0.5rem;
+}
+.variant-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.variant-header {
+  padding: 12px 16px;
+  font-weight: 500;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #ddd;
+}
+
+.variant-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.variant-row input[type="text"],
+.variant-row input[type="number"] {
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.variant-image {
+  width: 80px;
+  height: 80px;
+  background-color: #f1f1f1;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.variant-image img {
+  width: 20px;
+  height: 20px;
+}
+
+.variant-text {
+  flex-grow: 1;
+  font-weight: 500;
+}
+
+.variant-price,
+.variant-available {
+  width: 190px;
+  margin-left: 12px;
+}
+
+.footer-note {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #444;
+  background-color: #f9fafb;
+}
+
+.child-variant {
+  display: none;
+}
+
+.snack-success {
+  background-color: #4caf50; /* green */
+  color: #fff;
+}
+
+.snack-error {
+  background-color: #f44336; /* red */
+  color: #fff;
+}
