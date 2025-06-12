@@ -17,9 +17,10 @@ import { CommonModule } from '@angular/common';
 })
 export class MediaLibraryModalComponent {
   @Input() medias: any[] = [];
+  @Input() mediaUrls: any[] = [];
+  @Input() mutateStatus: boolean = false;
   @Output() confirmSelection = new EventEmitter<string[]>();
   @Output() uploadSelectedFiles = new EventEmitter<FileList>();
-
   @ViewChild('modalFileInput') modalFileInput!: ElementRef<HTMLInputElement>;
 
   selectedMediaUrls: Set<string> = new Set();

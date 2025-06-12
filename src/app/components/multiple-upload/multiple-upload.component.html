@@ -164,6 +164,8 @@
 </div>
 <app-media-library-modal
   [medias]="medias"
+  [mediaUrls]="mediaUrls"
+  [mutateStatus]="true"
   (confirmSelection)="onModalConfirmSelection($event)"
   (uploadSelectedFiles)="onModalFileSelected($event)"
 ></app-media-library-modal>
