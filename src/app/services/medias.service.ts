@@ -24,7 +24,7 @@ interface MediaParams {
   providedIn: 'root',
 })
 export class MediaService {
-  private apiUrl = 'http://localhost:4000/media/lists';
+  private apiUrl = 'http://localhost:8080/media/lists';
 
   constructor(private http: HttpClient) {}
 

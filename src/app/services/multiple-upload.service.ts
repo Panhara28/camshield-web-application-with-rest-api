@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class MultipleUploadService {
-  private fileUploadUrl = 'http://localhost:4000/upload/files';
+  private fileUploadUrl = 'http://localhost:8080/upload/files';
 
   constructor(private http: HttpClient) {}
 

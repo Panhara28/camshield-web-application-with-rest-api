@@ -5,6 +5,8 @@ import {
   Output,
   ViewChild,
   ElementRef,
+  SimpleChanges,
+  OnChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -15,7 +17,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './media-library-modal.component.html',
   styleUrl: './media-library-modal.component.css',
 })
-export class MediaLibraryModalComponent {
+export class MediaLibraryModalComponent implements OnChanges {
   @Input() medias: any[] = [];
   @Input() mediaUrls: any[] = [];
   @Input() mutateStatus: boolean = false;
@@ -24,6 +26,16 @@ export class MediaLibraryModalComponent {
   @ViewChild('modalFileInput') modalFileInput!: ElementRef<HTMLInputElement>;
 
   selectedMediaUrls: Set<string> = new Set();
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['mediaUrls'] && this.mediaUrls) {
+      this.selectedMediaUrls = new Set(this.mediaUrls.map((m: any) => m.url));
+      console.log(
+        '[Modal] Initialized selectedMediaUrls from input:',
+        this.selectedMediaUrls
+      );
+    }
+  }
 
   toggleMediaSelection(url: string) {
     if (this.selectedMediaUrls.has(url)) {
@@ -37,8 +49,11 @@ export class MediaLibraryModalComponent {
     return this.selectedMediaUrls.has(url);
   }
 
-  onModalConfirmSelection() {
-    this.confirmSelection.emit(Array.from(this.selectedMediaUrls));
+  onModalConfirmSelection(): void {
+    const selectedUrls = Array.from(this.selectedMediaUrls);
+    console.log('[Modal] Selected URLs:', selectedUrls);
+
+    this.confirmSelection.emit(selectedUrls);
   }
 
   onModalFileSelected(event: any) {

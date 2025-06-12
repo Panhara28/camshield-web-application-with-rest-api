@@ -125,10 +125,22 @@ export class MultipleUploadComponent {
   }
 
   ngOnInit() {
+    if (this.mutateStatus && Array.isArray(this.mediaUrls)) {
+      this.confirmedMediaUrls = new Set(
+        this.mediaUrls.map((media: any) => media.url)
+      );
+      this.confirmedMediaList = [...this.mediaUrls];
+    }
+
     this.route.queryParams.subscribe((params) => {
       this.mediaService.getMedias(params).subscribe((res) => {
         this.medias = res.data;
         this.meta = res.meta;
+
+        // 🛠 Refresh confirmed list using current confirmedMediaUrls
+        this.confirmedMediaList = this.medias.filter((m: any) =>
+          this.confirmedMediaUrls.has(m.url)
+        );
       });
     });
   }
@@ -271,13 +283,38 @@ export class MultipleUploadComponent {
     });
   }
 
-  onModalConfirmSelection(selectedUrls: string[]) {
-    this.selectedMediaUrls = new Set(selectedUrls);
-    this.confirmedMediaUrls = new Set(selectedUrls);
-    this.confirmedMediaList = this.medias.filter((m: any) =>
-      this.confirmedMediaUrls.has(m.url)
+  onModalConfirmSelection(selectedUrls: string[]): void {
+    console.log('[UploadComponent] Selected URLs from modal:', selectedUrls);
+
+    const selectedMediaObjects = this.medias.filter((m: any) =>
+      selectedUrls.includes(m.url)
     );
-    this.mediaUrlsChanged.emit(this.confirmedMediaList); // emit updated selection to parent
+
+    console.log(
+      '[UploadComponent] Selected media objects from modal:',
+      selectedMediaObjects
+    );
+
+    const allMedia = [...this.mediaUrls, ...selectedMediaObjects];
+    const uniqueMap = new Map<string, any>();
+    allMedia.forEach((m) => uniqueMap.set(m.url, m));
+
+    this.confirmedMediaList = Array.from(uniqueMap.values());
+    this.confirmedMediaUrls = new Set(
+      this.confirmedMediaList.map((m) => m.url)
+    );
+
+    // ✅ ADD THIS TO UPDATE THE BOUND VIEW
+    if (this.mutateStatus) {
+      this.mediaUrls = [...this.confirmedMediaList];
+    }
+
+    console.log(
+      '[UploadComponent] Final merged confirmedMediaList:',
+      this.confirmedMediaList
+    );
+
+    this.mediaUrlsChanged.emit(this.confirmedMediaList);
   }
 
   get allMediaUrls(): string[] {

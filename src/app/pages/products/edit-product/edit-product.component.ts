@@ -287,6 +287,8 @@ export class EditProductComponent {
   }
 
   onMediaUrlsChanged(mediaList: any[]): void {
+    console.log('[EditProduct] Received mediaList from uploader:', mediaList);
+
     this.product.mediaUrls = mediaList;
   }
 
@@ -330,11 +332,11 @@ export class EditProductComponent {
     const payload = {
       ...productWithoutMediaDetails,
       variants,
-      mediaUrls: this.product.MediaProductDetails,
+      mediaUrls: this.product.mediaUrls || [],
       type: this.product.type || '',
     };
 
-    console.log(payload);
+    console.log('[Submit] Final payload:', payload);
     // Uncomment this to enable API call:
     // this.createProductService.updateProduct(this.product.id, payload).subscribe({
     //   next: () => {
