@@ -1,6 +1,10 @@
 <div
   class="media-upload-box"
-  *ngIf="mutateStatus ? mediaUrls.length === 0 : allMediaUrls.length === 0"
+  *ngIf="
+    mutateStatus
+      ? (mediaUrls?.length || 0) === 0
+      : (allMediaUrls?.length || 0) === 0
+  "
 >
   <label class="media-upload-label">Media</label>
   <div class="media-upload-zone">
@@ -38,7 +42,11 @@
     <div class="row">
       <div
         class="d-flex align-items-center justify-content-between mb-2 p-0"
-        *ngIf="mutateStatus ? mediaUrls.length > 0 : checkedMediaUrls.size > 0"
+        *ngIf="
+          mutateStatus
+            ? (mediaUrls?.length || 0) > 0
+            : (checkedMediaUrls?.size || 0) > 0
+        "
       >
         <div class="d-flex align-items-center gap-2">
           <div
@@ -138,8 +146,8 @@
             <div
               *ngIf="
                 mutateStatus
-                  ? mediaUrls.length > 0
-                  : confirmedMediaUrls.size > 0
+                  ? (mediaUrls?.length || 0) > 0
+                  : (confirmedMediaUrls?.size || 0) > 0
               "
               class="card small-card d-flex justify-content-center align-items-center border rounded-3 border-secondary-subtle"
               style="cursor: pointer"

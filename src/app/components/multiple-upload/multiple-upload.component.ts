@@ -61,7 +61,7 @@ export class MultipleUploadComponent {
   selectedImageDetail: any = null;
   isImagePopupOpen = false;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
-  @Input() mediaUrls: any = undefined;
+  @Input() mediaUrls: any = [];
   @Input() mutateStatus: boolean = false;
 
   uploadedFiles: {
@@ -316,7 +316,7 @@ export class MultipleUploadComponent {
 
   getExtraCount(): number {
     if (this.mutateStatus) {
-      const total = this.mediaUrls.length;
+      const total = this.mediaUrls?.length || 0;
       if (total <= 1) return 0;
 
       const remaining = total - 0; // exclude the first image
@@ -362,7 +362,9 @@ export class MultipleUploadComponent {
 
   getFirstConfirmedMedia(): any | null {
     if (this.mutateStatus) {
-      return this.mediaUrls.length > 0 ? this.mediaUrls[0] : null;
+      return Array.isArray(this.mediaUrls) && this.mediaUrls.length > 0
+        ? this.mediaUrls[0]
+        : null;
     } else {
       return this.confirmedMediaList.length > 0
         ? this.confirmedMediaList[0]
