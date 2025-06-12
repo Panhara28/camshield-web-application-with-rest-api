@@ -43,33 +43,55 @@ interface PaginationMeta {
   styleUrl: './multiple-upload.component.css',
 })
 export class MultipleUploadComponent {
-  previewUrls: string[] = [];
-  previewFiles: File[] = [];
-  isUploading = false;
-  isUploadButtonDisabled = true;
-  medias: any = [];
-  media: any = undefined;
-  meta: PaginationMeta = { page: 1, limit: 20, totalPages: 1, total: 0 };
-  selectedMediaUrls: Set<string> = new Set();
+  // ===========================
+  // Angular Decorators
+  // ===========================
   @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
-  maxThumbnails = 8;
-  isExpanded = false;
-  confirmedMediaUrls: Set<string> = new Set();
-  selectedConfirmedUrls: Set<string> = new Set();
-  confirmedMediaList: any[] = [];
-  checkedMediaUrls: Set<string> = new Set();
-  selectedImageDetail: any = null;
-  isImagePopupOpen = false;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
   @Input() mediaUrls: any = [];
   @Input() mutateStatus: boolean = false;
 
+  // ===========================
+  // Media & Upload States
+  // ===========================
+  medias: any = [];
+  media: any = undefined;
   uploadedFiles: {
     file: File;
     url: string;
     filename: string;
     preview?: string;
   }[] = [];
+  isUploading = false;
+  isUploadButtonDisabled = true;
+  maxThumbnails = 8;
+
+  // ===========================
+  // Media Preview
+  // ===========================
+  previewUrls: string[] = [];
+  previewFiles: File[] = [];
+  isExpanded = false;
+
+  // ===========================
+  // Media Selection & Confirmation
+  // ===========================
+  selectedMediaUrls: Set<string> = new Set();
+  confirmedMediaUrls: Set<string> = new Set();
+  selectedConfirmedUrls: Set<string> = new Set();
+  confirmedMediaList: any[] = [];
+  checkedMediaUrls: Set<string> = new Set();
+
+  // ===========================
+  // UI State
+  // ===========================
+  selectedImageDetail: any = null;
+  isImagePopupOpen = false;
+
+  // ===========================
+  // Pagination Metadata
+  // ===========================
+  meta: PaginationMeta = { page: 1, limit: 20, totalPages: 1, total: 0 };
 
   constructor(
     private createMediaService: CreateMediaService,
