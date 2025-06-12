@@ -1,8 +1,8 @@
 <app-layouts>
   <div class="container-xl px-4">
     <app-page-title
-      title="Create Products"
-      description="This is will be the description of user list!"
+      title="Edit Product"
+      description="Update your product details below."
     ></app-page-title>
     <div class="row">
       <div class="col-lg-8">
@@ -15,11 +15,13 @@
               type="text"
               class="form-control"
               placeholder="Enter product title"
+              [(ngModel)]="product.title"
             />
           </div>
           <div class="mb-3">
             <label class="form-label">Description</label>
             <quill-editor
+              [(ngModel)]="product.description"
               [style]="{ height: '200px', width: '100%' }"
               [modules]="{
                 toolbar: [
@@ -32,19 +34,28 @@
             ></quill-editor>
           </div>
           <div class="mb-3">
-            <div>[Multiple Upload Placeholder]</div>
+            <app-multiple-upload
+              (mediaUrlsChanged)="onMediaUrlsChanged($event)"
+            ></app-multiple-upload>
           </div>
           <div class="mb-3">
-            <select class="form-select">
-              <option disabled selected>Choose a product category</option>
-              <optgroup label="Group 1">
-                <option>Subcategory 1</option>
-                <option>Subcategory 2</option>
-              </optgroup>
-              <optgroup label="Group 2">
-                <option>Subcategory 3</option>
-              </optgroup>
-            </select>
+            <mat-form-field appearance="fill" class="w-100">
+              <mat-label>Choose a product category</mat-label>
+              <mat-select [(ngModel)]="product.categoryId">
+                <ng-container *ngFor="let group of topLevelCategories">
+                  <mat-optgroup [label]="group.name">
+                    <mat-option [value]="group.id">{{ group.name }}</mat-option>
+                    <ng-container
+                      *ngFor="let child of getAllDescendants(group)"
+                    >
+                      <mat-option [value]="child.id">
+                        {{ "—".repeat(child.level) }} {{ child.name }}
+                      </mat-option>
+                    </ng-container>
+                  </mat-optgroup>
+                </ng-container>
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
 
@@ -54,37 +65,51 @@
           <div class="row mb-3">
             <div class="col-md-4">
               <label class="form-label">Price</label>
-              <input type="number" class="form-control" placeholder="$0.00" />
+              <input
+                type="number"
+                class="form-control"
+                placeholder="$0.00"
+                [(ngModel)]="product.price"
+                (input)="updateProfitMargin()"
+              />
             </div>
             <div class="col-md-4">
-              <label class="form-label"
-                >Compare-at price
-                <i
-                  class="fas fa-info-circle"
-                  title="Original price before discount."
-                ></i>
-              </label>
-              <input type="number" class="form-control" placeholder="$0.00" />
+              <label class="form-label">Compare-at price</label>
+              <input
+                type="number"
+                class="form-control"
+                placeholder="$0.00"
+                [(ngModel)]="product.compareAtPrice"
+              />
             </div>
           </div>
           <div class="row">
             <div class="col-md-4">
-              <label class="form-label"
-                >Cost per item
-                <i
-                  class="fas fa-info-circle"
-                  title="How much it costs you to buy or make this product."
-                ></i>
-              </label>
-              <input type="number" class="form-control" />
+              <label class="form-label">Cost per item</label>
+              <input
+                type="number"
+                class="form-control"
+                [(ngModel)]="product.costPerItem"
+                (input)="updateProfitMargin()"
+              />
             </div>
             <div class="col-md-4">
               <label class="form-label">Profit</label>
-              <input type="text" class="form-control" value="0" disabled />
+              <input
+                type="text"
+                class="form-control"
+                [value]="profit"
+                disabled
+              />
             </div>
             <div class="col-md-4">
               <label class="form-label">Margin</label>
-              <input type="text" class="form-control" value="0%" disabled />
+              <input
+                type="text"
+                class="form-control"
+                [value]="margin"
+                disabled
+              />
             </div>
           </div>
         </div>
@@ -93,112 +118,169 @@
         <div class="card">
           <div class="card-title">Variants</div>
           <div class="card p-4 shadow-sm">
-            <div class="card-body">
+            <div class="card-body" *ngFor="let opt of usedOptionsArray">
               <div class="mb-3">
-                <label class="form-label fw-semibold">Option name</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0"
-                    ><i class="fa fa-grip-vertical"></i
-                  ></span>
-                  <input
-                    type="text"
-                    class="form-control border-start-0"
-                    value="Size"
-                    disabled
-                  />
-                </div>
+                <label class="form-label fw-semibold"
+                  >Option name {{ opt }}</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  [value]="opt"
+                  disabled
+                />
               </div>
 
               <div class="mb-2">
                 <label class="form-label fw-semibold">Option values</label>
-                <div class="input-group mb-2">
-                  <span class="input-group-text bg-white border-end-0"
-                    ><i class="fa fa-grip-vertical"></i
-                  ></span>
+                <div
+                  class="input-group mb-2"
+                  *ngFor="
+                    let val of variantValues[opt];
+                    let i = index;
+                    trackBy: trackByIndex
+                  "
+                >
                   <input
                     type="text"
-                    class="form-control border-start-0"
+                    class="form-control"
                     placeholder="Add Value"
+                    [(ngModel)]="variantValues[opt][i]"
                   />
-                  <button class="btn btn-outline-secondary" type="button">
+                  <button
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="removeOptionValue(opt, i)"
+                  >
                     <i class="fa fa-trash"></i>
                   </button>
                 </div>
-                <button class="btn btn-sm btn-primary">
+                <button
+                  class="btn btn-sm btn-primary"
+                  (click)="addOptionValue(opt)"
+                >
                   <i class="fa fa-plus me-1"></i> Add Value
                 </button>
               </div>
 
               <div class="d-flex justify-content-between mt-3">
-                <button class="btn btn-outline-danger">Delete</button>
-                <button class="btn btn-dark">Done</button>
+                <button
+                  class="btn btn-outline-danger"
+                  (click)="removeOption(opt)"
+                >
+                  Delete
+                </button>
+                <button
+                  class="btn btn-dark"
+                  (click)="generateGroupedVariantsObject()"
+                >
+                  Done
+                </button>
               </div>
             </div>
-            <div class="card-footer bg-white py-3" style="border-top: none">
+            <div class="card-footer bg-white py-3" (click)="addOption()">
               <div class="text-decoration-none">
                 <i class="fa fa-plus-circle me-1"></i> Add another option
               </div>
             </div>
           </div>
 
-          <div class="variant-card">
+          <div class="variant-card" *ngIf="showVariantsTable">
             <div class="variant-header d-flex justify-content-between">
               <span>Variant · Collapse all</span>
               <span class="d-none d-md-block">Price</span>
               <span class="d-none d-md-block">Available</span>
             </div>
 
-            <div class="variant-group mb-3">
-              <div
-                class="bg-light px-3 py-2 d-flex justify-content-between align-items-center border"
-                style="cursor: pointer"
-              >
-                <strong>Size / Color</strong>
-                <i class="fa fa-chevron-down"></i>
-              </div>
-
-              <div class="variant-row">
-                <input type="checkbox" class="form-check-input me-2" />
+            <div *ngFor="let group of groupedVariantData | keyvalue">
+              <div class="variant-group mb-3">
                 <div
-                  class="variant-image"
-                  style="
-                    width: 80px;
-                    height: 80px;
-                    border: 1px dashed #ccc;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    background-color: #f9f9f9;
-                    position: relative;
-                  "
+                  class="bg-light px-3 py-2 d-flex justify-content-between align-items-center border"
+                  (click)="toggleGroupCollapse(group.key)"
+                  style="cursor: pointer"
                 >
+                  <strong>{{ group.key }}</strong>
                   <i
-                    class="fas fa-image"
-                    style="font-size: 24px; color: #bbb"
+                    class="fa"
+                    [ngClass]="{
+                      'fa-chevron-down': !isGroupCollapsed(group.key),
+                      'fa-chevron-up': isGroupCollapsed(group.key)
+                    }"
                   ></i>
                 </div>
-                <div class="variant-text d-flex">
-                  <span class="me-2">M</span><span class="me-2">/</span
-                  ><span class="me-2">Black</span>
+
+                <div *ngIf="!isGroupCollapsed(group.key)">
+                  <div class="variant-row" *ngFor="let variant of group.value">
+                    <input type="checkbox" class="form-check-input me-2" />
+                    <div
+                      class="variant-image"
+                      (click)="openVariantMediaModal(variant)"
+                      style="
+                        width: 80px;
+                        height: 80px;
+                        border: 1px dashed #ccc;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        overflow: hidden;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        background-color: #f9f9f9;
+                        position: relative;
+                      "
+                    >
+                      <ng-container
+                        *ngIf="
+                          variantDetailMap[getVariantKey(variant)]
+                            ?.imageVariant;
+                          else placeholderIcon
+                        "
+                      >
+                        <img
+                          [src]="
+                            variantDetailMap[getVariantKey(variant)]
+                              .imageVariant
+                          "
+                          alt="Variant Image"
+                          style="width: 100%; height: 100%; object-fit: cover"
+                        />
+                      </ng-container>
+                      <ng-template #placeholderIcon>
+                        <i
+                          class="fas fa-image"
+                          style="font-size: 24px; color: #bbb"
+                        ></i>
+                      </ng-template>
+                    </div>
+                    <div class="variant-text d-flex">
+                      <div *ngFor="let opt of usedOptionsArray">
+                        <span class="me-2">{{ variant[opt] }}</span>
+                        <span class="me-2">/</span>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      class="form-control variant-price"
+                      [(ngModel)]="variant.price"
+                      (ngModelChange)="
+                        updateVariantDetail(variant, 'price', $event)
+                      "
+                    />
+                    <input
+                      type="number"
+                      class="form-control variant-available"
+                      [(ngModel)]="variant.stock"
+                      (ngModelChange)="
+                        updateVariantDetail(variant, 'stock', $event)
+                      "
+                    />
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  class="form-control variant-price"
-                  value="$0.00"
-                />
-                <input
-                  type="number"
-                  class="form-control variant-available"
-                  value="0"
-                />
               </div>
             </div>
 
             <div class="footer-note">
-              Total inventory at Shop location: 0 available
+              Total inventory at Shop location: {{ totalInventory }} available
             </div>
           </div>
         </div>
@@ -208,17 +290,22 @@
       <div class="col-lg-4">
         <div class="card">
           <h5>Status</h5>
-          <select class="form-select">
-            <option>Active</option>
-            <option>Draft</option>
-            <option>Archived</option>
+          <select class="form-select" [(ngModel)]="product.status">
+            <option value="ACTIVE">Active</option>
+            <option value="DRAFT">Draft</option>
+            <option value="ARCHIVED">Archived</option>
           </select>
         </div>
         <div class="card">
           <h5>Product organization <i class="fas fa-info-circle"></i></h5>
           <div class="mb-3">
             <label class="form-label">Type</label>
-            <input type="text" class="form-control" placeholder="e.g. Shirt" />
+            <input
+              type="text"
+              class="form-control"
+              placeholder="e.g. Shirt"
+              [(ngModel)]="product.type"
+            />
           </div>
           <div class="mb-3">
             <label class="form-label">Vendor</label>
@@ -226,15 +313,21 @@
               type="text"
               class="form-control"
               placeholder="e.g. Acme Co."
+              [(ngModel)]="product.vendor"
             />
           </div>
         </div>
         <div class="card">
-          <button class="btn btn-primary">Submit Product</button>
+          <button class="btn btn-primary" (click)="submitProductForm()">
+            Update Product
+          </button>
         </div>
       </div>
     </div>
   </div>
 </app-layouts>
 
-<div>[Media Library Modal Placeholder]</div>
+<app-single-media-library
+  [medias]="medias"
+  (confirmSelection)="onModalConfirmSelection($event)"
+></app-single-media-library>
