@@ -86,6 +86,8 @@ export class EditProductComponent {
   currentVariantForImage: any = null;
   selectedMediaUrls: Set<string> = new Set();
   showVariantsTable: boolean = false;
+  @ViewChild(SingleMediaLibraryComponent)
+  mediaLibraryModal!: SingleMediaLibraryComponent;
 
   groupBy: string = 'Size';
   defaultVariantOptions = ['Size', 'Color', 'Material'];
@@ -214,24 +216,25 @@ export class EditProductComponent {
     const newCombinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
-    const oldCombinations = Object.keys(this.variantDetailMap).map((k) =>
-      k.split('||')
-    );
-
-    this.preserveVariantDetails(oldCombinations, newCombinations, optionNames);
+    const oldMap = { ...this.variantDetailMap };
 
     const groupBy = optionNames[0];
     const groupIndex = optionNames.indexOf(groupBy);
     const grouped: { [key: string]: any[] } = {};
 
+    this.variantDetailMap = {};
+
     newCombinations.forEach((combo) => {
+      const key = combo.join('||');
+      const existing = oldMap[key] || { price: 0, stock: 0, imageVariant: '' };
+
       const variantObj: { [key: string]: any } = {};
       combo.forEach((val, idx) => {
         variantObj[optionNames[idx]] = val;
       });
 
-      const key = combo.join('||');
-      Object.assign(variantObj, this.variantDetailMap[key]);
+      this.variantDetailMap[key] = existing;
+      Object.assign(variantObj, existing);
 
       const groupKey = combo[groupIndex];
       if (!grouped[groupKey]) grouped[groupKey] = [];
@@ -284,14 +287,17 @@ export class EditProductComponent {
     this.currentVariantForImage = variant;
     const key = this.getVariantKey(variant);
     this.currentVariantImage = this.variantDetailMap[key]?.imageVariant || '';
+
+    // Open modal
+    this.mediaLibraryModal.open();
   }
 
   onModalConfirmSelection(selectedUrls: string[]): void {
-    if (this.currentVariantForImage && selectedUrls[0]) {
+    if (this.currentVariantForImage) {
       this.updateVariantDetail(
         this.currentVariantForImage,
         'imageVariant',
-        selectedUrls[0]
+        selectedUrls[0] || ''
       );
       this.currentVariantForImage = null;
     }
@@ -346,7 +352,6 @@ export class EditProductComponent {
       type: this.product.type || '',
     };
 
-    // Uncomment this to enable API call:
     this.updateProductService
       .updateProduct(this.product.slug, payload)
       .subscribe({
@@ -358,14 +363,10 @@ export class EditProductComponent {
           this.router.navigate([`/products/${this.product.slug}/edit`]);
         },
         error: () =>
-          this.snackBar.open(
-            '❌ Failed to update product. Please try again.',
-            'Close',
-            {
-              duration: 3000,
-              panelClass: ['snack-error'],
-            }
-          ),
+          this.snackBar.open('❌ Failed to update product.', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-error'],
+          }),
       });
   }
 

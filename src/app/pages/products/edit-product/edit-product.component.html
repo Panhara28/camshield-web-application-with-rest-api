@@ -217,8 +217,6 @@
                     <div
                       class="variant-image"
                       (click)="openVariantMediaModal(variant)"
-                      data-bs-toggle="modal"
-                      data-bs-target="#singleMediaModal"
                       style="
                         width: 80px;
                         height: 80px;
@@ -332,6 +330,7 @@
 </app-layouts>
 
 <app-single-media-library
+  [productId]="product.id"
   [medias]="variantMediaOnly"
   [selectedImageUrl]="currentVariantImage"
   (confirmSelection)="onModalConfirmSelection($event)"

@@ -7,6 +7,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
+import { Modal } from 'bootstrap';
 
 @Component({
   selector: 'app-single-media-library',
@@ -19,6 +20,8 @@ export class SingleMediaLibraryComponent {
   @Output() confirmSelection = new EventEmitter<string[]>();
   @Output() uploadSelectedFiles = new EventEmitter<FileList>();
   @Input() selectedImageUrl: string | null = null;
+  @Input() productId!: number; // ✅ Add this line
+  @ViewChild('modalRef', { static: false }) modalRef!: ElementRef;
 
   @ViewChild('modalFileInput') modalFileInput!: ElementRef<HTMLInputElement>;
   selectedMediaUrl: string | null = null;
@@ -28,6 +31,11 @@ export class SingleMediaLibraryComponent {
     if (this.selectedImageUrl) {
       this.selectedMediaUrl = this.selectedImageUrl;
     }
+  }
+
+  open() {
+    const modal = new Modal(this.modalRef.nativeElement);
+    modal.show();
   }
 
   toggleMediaSelection(url: string) {
