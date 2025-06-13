@@ -45,6 +45,7 @@ export class EditProductComponent {
   @ViewChild('variantOptionsContainer') variantOptionsContainer!: ElementRef;
   @ViewChild('groupBySelect') groupBySelect!: ElementRef;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
+  variantMediaOnly: any[] = []; // Add this
 
   product: any = {
     title: '',
@@ -79,6 +80,8 @@ export class EditProductComponent {
   confirmedMediaUrls: Set<string> = new Set();
   confirmedMediaList: any[] = [];
   meta: any = {};
+  currentVariantImage: string = '';
+  productId: number = 0; // from product detail
 
   currentVariantForImage: any = null;
   selectedMediaUrls: Set<string> = new Set();
@@ -107,6 +110,7 @@ export class EditProductComponent {
         this.productDetailService.getProductDetailBySlug(slug).subscribe({
           next: (res: any) => {
             this.product = { ...res };
+            this.variantMediaOnly = res.MediaProductDetails || []; // <-- NEW
             this.populateVariantState(res.variants);
             this.updateProfitMargin();
           },
@@ -115,8 +119,11 @@ export class EditProductComponent {
       }
     });
 
+    // This can remain as-is for the full media library for other components
     this.route.queryParams.subscribe((params) => {
       this.mediaService.getMedias(params).subscribe((res) => {
+        this.productId = res.id;
+
         this.medias = res.data;
         this.meta = res.meta;
       });
@@ -275,6 +282,8 @@ export class EditProductComponent {
 
   openVariantMediaModal(variant: any): void {
     this.currentVariantForImage = variant;
+    const key = this.getVariantKey(variant);
+    this.currentVariantImage = this.variantDetailMap[key]?.imageVariant || '';
   }
 
   onModalConfirmSelection(selectedUrls: string[]): void {
