@@ -202,6 +202,9 @@ export class EditProductComponent {
     this.variantValues[option][index] = input.value.trim();
   }
   generateGroupedVariantsObject() {
+    // ✅ Sync table edits first
+    this.syncTableToVariantMap();
+
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
       .map((opt) => ({
@@ -255,6 +258,7 @@ export class EditProductComponent {
     this.groupedVariantData = grouped;
     this.showVariantsTable = this.hasValidVariants();
   }
+
   getVariantKeyObject(variant: any): string {
     const entries = Object.entries(variant)
       .filter(([k]) => this.usedOptions.has(k))
@@ -347,6 +351,8 @@ export class EditProductComponent {
   }
 
   submitProductForm(): void {
+    this.syncTableToVariantMap(); // ✅ Add this
+
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
       .map((opt) => ({
@@ -365,7 +371,12 @@ export class EditProductComponent {
         variant[optionNames[i].toLowerCase()] = value;
       });
 
-      const key = combo.join('||');
+      const keyObj: any = {};
+      combo.forEach((value, i) => {
+        keyObj[optionNames[i]] = value;
+      });
+
+      const key = this.getVariantKeyObject(keyObj);
       const detail = this.variantDetailMap[key] || {
         price: 0,
         stock: 0,
@@ -401,10 +412,14 @@ export class EditProductComponent {
           this.router.navigate([`/products/${this.product.slug}/edit`]);
         },
         error: () =>
-          this.snackBar.open('❌ Failed to update product.', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-error'],
-          }),
+          this.snackBar.open(
+            '❌ Failed to update product. Please try again.',
+            'Close',
+            {
+              duration: 3000,
+              panelClass: ['snack-error'],
+            }
+          ),
       });
   }
 
@@ -467,5 +482,21 @@ export class EditProductComponent {
 
   isGroupCollapsed(groupKey: string): boolean {
     return this.collapsedGroups.has(groupKey);
+  }
+
+  syncTableToVariantMap() {
+    const allVariants = Object.values(this.groupedVariantData).flat();
+
+    for (const variant of allVariants) {
+      const key = this.getVariantKeyObject(variant);
+
+      if (!this.variantDetailMap[key]) {
+        this.variantDetailMap[key] = { price: 0, stock: 0, imageVariant: '' };
+      }
+
+      this.variantDetailMap[key].price = variant.price ?? 0;
+      this.variantDetailMap[key].stock = variant.stock ?? 0;
+      this.variantDetailMap[key].imageVariant = variant.imageVariant ?? '';
+    }
   }
 }
