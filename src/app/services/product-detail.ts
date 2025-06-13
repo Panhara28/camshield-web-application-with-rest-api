@@ -24,7 +24,7 @@ export interface ProductDetail {
   providedIn: 'root',
 })
 export class ProductDetialService {
-  private readonly API_BASE = 'http://localhost:8080/products'; // adjust if needed
+  private readonly API_BASE = 'http://localhost:4000/products'; // adjust if needed
 
   constructor(private http: HttpClient) {}
 

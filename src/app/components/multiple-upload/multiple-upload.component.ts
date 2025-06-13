@@ -395,27 +395,41 @@ export class MultipleUploadComponent {
 
   clearSelectedMedia(): void {
     if (this.mutateStatus) {
-      this.mediaUrls = this.mediaUrls.filter(
+      // Remove from mediaUrls
+      const updated = this.mediaUrls.filter(
         (media: any) => !this.checkedMediaUrls.has(media.url)
       );
+      this.mediaUrls = [...updated];
+
+      // 🔥 If nothing left, also reset everything else
+      if (this.mediaUrls.length === 0) {
+        this.confirmedMediaList = [];
+        this.confirmedMediaUrls.clear();
+      } else {
+        this.confirmedMediaList = [...this.mediaUrls];
+        this.confirmedMediaUrls = new Set(
+          this.mediaUrls.map((m: any) => m.url)
+        );
+      }
+
+      this.mediaUrlsChanged.emit([...this.mediaUrls]);
     } else {
-      // Remove from main medias array
+      // For create mode
       this.medias = this.medias.filter(
         (media: any) => !this.checkedMediaUrls.has(media.url)
       );
+
+      for (const url of this.checkedMediaUrls) {
+        this.confirmedMediaUrls.delete(url);
+      }
+
+      this.confirmedMediaList = this.medias.filter((m: any) =>
+        this.confirmedMediaUrls.has(m.url)
+      );
+
+      this.mediaUrlsChanged.emit([...this.confirmedMediaList]);
     }
 
-    // Remove from confirmedMediaUrls set
-    for (const url of this.checkedMediaUrls) {
-      this.confirmedMediaUrls.delete(url);
-    }
-
-    // Update confirmedMediaList accordingly
-    this.confirmedMediaList = this.medias.filter((m: any) =>
-      this.confirmedMediaUrls.has(m.url)
-    );
-
-    // Clear selected checkboxes
     this.checkedMediaUrls.clear();
   }
 

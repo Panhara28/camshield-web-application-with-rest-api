@@ -21,6 +21,7 @@ import { CategoryService } from '../../../services/categories-service';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ProductDetialService } from '../../../services/product-detail';
+import { UpdateProductSerivce } from '../../../services/update-product.service';
 
 @Component({
   selector: 'app-edit-product',
@@ -94,7 +95,8 @@ export class EditProductComponent {
     private productDetailService: ProductDetialService,
     private snackBar: MatSnackBar,
     private categoryService: CategoryService,
-    private router: Router
+    private router: Router,
+    private updateProductService: UpdateProductSerivce
   ) {}
 
   ngOnInit() {
@@ -287,9 +289,9 @@ export class EditProductComponent {
   }
 
   onMediaUrlsChanged(mediaList: any[]): void {
-    console.log('[EditProduct] Received mediaList from uploader:', mediaList);
-
-    this.product.mediaUrls = mediaList;
+    console.log('[EditProduct] Received updated media list:', mediaList);
+    this.product.mediaUrls = [...mediaList]; // ✅ Assign a new array (triggers change detection)
+    this.product.MediaProductDetails = [...mediaList]; // ✅ If your payload uses this
   }
 
   submitProductForm(): void {
@@ -332,26 +334,31 @@ export class EditProductComponent {
     const payload = {
       ...productWithoutMediaDetails,
       variants,
-      mediaUrls: this.product.mediaUrls || [],
+      MediaProductDetails: this.product.mediaUrls || [],
       type: this.product.type || '',
     };
 
-    console.log('[Submit] Final payload:', payload);
     // Uncomment this to enable API call:
-    // this.createProductService.updateProduct(this.product.id, payload).subscribe({
-    //   next: () => {
-    //     this.snackBar.open('✅ Product updated successfully!', 'Close', {
-    //       duration: 3000,
-    //       panelClass: ['snack-success'],
-    //     });
-    //     this.router.navigate([`/products/${this.product.slug}/edit`]);
-    //   },
-    //   error: () =>
-    //     this.snackBar.open('❌ Failed to update product. Please try again.', 'Close', {
-    //       duration: 3000,
-    //       panelClass: ['snack-error'],
-    //     }),
-    // });
+    this.updateProductService
+      .updateProduct(this.product.slug, payload)
+      .subscribe({
+        next: () => {
+          this.snackBar.open('✅ Product updated successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success'],
+          });
+          this.router.navigate([`/products/${this.product.slug}/edit`]);
+        },
+        error: () =>
+          this.snackBar.open(
+            '❌ Failed to update product. Please try again.',
+            'Close',
+            {
+              duration: 3000,
+              panelClass: ['snack-error'],
+            }
+          ),
+      });
   }
 
   cartesian(arr: string[][]): string[][] {
