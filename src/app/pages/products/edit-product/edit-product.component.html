@@ -255,10 +255,13 @@
                       </ng-template>
                     </div>
                     <div class="variant-text d-flex">
-                      <div *ngFor="let opt of usedOptionsArray">
-                        <span class="me-2">{{ variant[opt] }}</span>
-                        <span class="me-2">/</span>
-                      </div>
+                      <pre>{{ usedOptionsArray | json }}</pre>
+
+                      <ng-container
+                        *ngFor="let opt of usedOptionsArray; let last = last"
+                      >
+                        {{ variant[opt] }}<span *ngIf="!last"> / </span>
+                      </ng-container>
                     </div>
                     <input
                       type="text"

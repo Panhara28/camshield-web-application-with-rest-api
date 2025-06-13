@@ -186,7 +186,9 @@ export class EditProductComponent {
   }
 
   addOptionValue(option: string) {
+    this.syncTableToVariantMap(); // ✅ Preserve current edits
     this.variantValues[option].push('');
+    this.generateGroupedVariantsObject(); // Optional: regenerate immediately
   }
 
   removeOptionValue(option: string, index: number) {
@@ -202,8 +204,7 @@ export class EditProductComponent {
     this.variantValues[option][index] = input.value.trim();
   }
   generateGroupedVariantsObject() {
-    // ✅ Sync table edits first
-    this.syncTableToVariantMap();
+    this.syncTableToVariantMap(); // ✅ Always sync first
 
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
@@ -230,20 +231,27 @@ export class EditProductComponent {
       });
 
       const variantKey = this.getVariantKeyObject(variantObj);
-      const oldData = this.variantDetailMap[variantKey] || {};
+      let oldData = this.variantDetailMap[variantKey];
+
+      // ✅ Fallback: Try to find partial match if not found
+      if (!oldData) {
+        const fallback = Object.entries(this.variantDetailMap).find(
+          ([key, data]) => {
+            const parsed = JSON.parse(key);
+            // Match all shared fields (like color + size)
+            return Object.entries(parsed).every(([k, v]) => {
+              return !variantObj[k] || variantObj[k] === v;
+            });
+          }
+        );
+        oldData = fallback?.[1] ?? { price: 0, stock: 0, imageVariant: '' };
+      }
 
       variantObj.price = oldData.price ?? 0;
       variantObj.stock = oldData.stock ?? 0;
       variantObj.imageVariant = oldData.imageVariant ?? '';
 
-      if (!this.variantDetailMap[variantKey]) {
-        this.variantDetailMap[variantKey] = {
-          price: 0,
-          stock: 0,
-          imageVariant: '',
-        };
-      }
-
+      // Save to variantDetailMap
       this.variantDetailMap[variantKey] = {
         price: variantObj.price,
         stock: variantObj.stock,
@@ -351,7 +359,7 @@ export class EditProductComponent {
   }
 
   submitProductForm(): void {
-    this.syncTableToVariantMap(); // ✅ Add this
+    this.syncTableToVariantMap(); // ✅ Sync all edits first
 
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
@@ -363,17 +371,17 @@ export class EditProductComponent {
     const combinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
-    const optionNames = cleanedOptions.map((opt) => opt.name);
+    const optionNames = cleanedOptions.map((opt) => opt.name); // e.g. ['Size', 'Color', 'Material']
 
     const variants = combinations.map((combo, idx) => {
       const variant: any = {};
-      combo.forEach((value, i) => {
-        variant[optionNames[i].toLowerCase()] = value;
-      });
-
       const keyObj: any = {};
+
       combo.forEach((value, i) => {
-        keyObj[optionNames[i]] = value;
+        const originalName = optionNames[i];
+        const lowerKey = originalName.toLowerCase(); // API-compatible
+        variant[lowerKey] = value;
+        keyObj[originalName] = value;
       });
 
       const key = this.getVariantKeyObject(keyObj);
