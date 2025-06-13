@@ -284,15 +284,8 @@ export class MultipleUploadComponent {
   }
 
   onModalConfirmSelection(selectedUrls: string[]): void {
-    console.log('[UploadComponent] Selected URLs from modal:', selectedUrls);
-
     const selectedMediaObjects = this.medias.filter((m: any) =>
       selectedUrls.includes(m.url)
-    );
-
-    console.log(
-      '[UploadComponent] Selected media objects from modal:',
-      selectedMediaObjects
     );
 
     const allMedia = [...this.mediaUrls, ...selectedMediaObjects];
@@ -308,11 +301,6 @@ export class MultipleUploadComponent {
     if (this.mutateStatus) {
       this.mediaUrls = [...this.confirmedMediaList];
     }
-
-    console.log(
-      '[UploadComponent] Final merged confirmedMediaList:',
-      this.confirmedMediaList
-    );
 
     this.mediaUrlsChanged.emit(this.confirmedMediaList);
   }

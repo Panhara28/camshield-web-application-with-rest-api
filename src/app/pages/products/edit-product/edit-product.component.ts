@@ -298,7 +298,6 @@ export class EditProductComponent {
   }
 
   onMediaUrlsChanged(mediaList: any[]): void {
-    console.log('[EditProduct] Received updated media list:', mediaList);
     this.product.mediaUrls = [...mediaList]; // ✅ Assign a new array (triggers change detection)
     this.product.MediaProductDetails = [...mediaList]; // ✅ If your payload uses this
   }

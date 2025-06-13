@@ -30,10 +30,6 @@ export class MediaLibraryModalComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['mediaUrls'] && this.mediaUrls) {
       this.selectedMediaUrls = new Set(this.mediaUrls.map((m: any) => m.url));
-      console.log(
-        '[Modal] Initialized selectedMediaUrls from input:',
-        this.selectedMediaUrls
-      );
     }
   }
 
@@ -51,8 +47,6 @@ export class MediaLibraryModalComponent implements OnChanges {
 
   onModalConfirmSelection(): void {
     const selectedUrls = Array.from(this.selectedMediaUrls);
-    console.log('[Modal] Selected URLs:', selectedUrls);
-
     this.confirmSelection.emit(selectedUrls);
   }
 
