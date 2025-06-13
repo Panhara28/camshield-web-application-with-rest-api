@@ -201,7 +201,6 @@ export class EditProductComponent {
     const input = event.target as HTMLInputElement;
     this.variantValues[option][index] = input.value.trim();
   }
-
   generateGroupedVariantsObject() {
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
@@ -216,25 +215,37 @@ export class EditProductComponent {
     const newCombinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
-    const oldMap = { ...this.variantDetailMap };
 
     const groupBy = optionNames[0];
     const groupIndex = optionNames.indexOf(groupBy);
     const grouped: { [key: string]: any[] } = {};
 
-    this.variantDetailMap = {};
-
     newCombinations.forEach((combo) => {
-      const key = combo.join('||');
-      const existing = oldMap[key] || { price: 0, stock: 0, imageVariant: '' };
-
-      const variantObj: { [key: string]: any } = {};
+      const variantObj: { [key: string]: any } | any = {};
       combo.forEach((val, idx) => {
         variantObj[optionNames[idx]] = val;
       });
 
-      this.variantDetailMap[key] = existing;
-      Object.assign(variantObj, existing);
+      const variantKey = this.getVariantKeyObject(variantObj);
+      const oldData = this.variantDetailMap[variantKey] || {};
+
+      variantObj.price = oldData.price ?? 0;
+      variantObj.stock = oldData.stock ?? 0;
+      variantObj.imageVariant = oldData.imageVariant ?? '';
+
+      if (!this.variantDetailMap[variantKey]) {
+        this.variantDetailMap[variantKey] = {
+          price: 0,
+          stock: 0,
+          imageVariant: '',
+        };
+      }
+
+      this.variantDetailMap[variantKey] = {
+        price: variantObj.price,
+        stock: variantObj.stock,
+        imageVariant: variantObj.imageVariant,
+      };
 
       const groupKey = combo[groupIndex];
       if (!grouped[groupKey]) grouped[groupKey] = [];
@@ -244,9 +255,11 @@ export class EditProductComponent {
     this.groupedVariantData = grouped;
     this.showVariantsTable = this.hasValidVariants();
   }
-
-  getVariantKey(variant: { [key: string]: string }): string {
-    return this.usedOptionsArray.map((opt) => variant[opt]).join('||');
+  getVariantKeyObject(variant: any): string {
+    const entries = Object.entries(variant)
+      .filter(([k]) => this.usedOptions.has(k))
+      .sort(([a], [b]) => a.localeCompare(b));
+    return JSON.stringify(Object.fromEntries(entries));
   }
 
   updateVariantDetail(
@@ -254,24 +267,50 @@ export class EditProductComponent {
     field: 'price' | 'stock' | 'imageVariant',
     value: any
   ) {
-    const key = this.getVariantKey(variant);
+    const key = this.getVariantKeyObject(variant);
     if (!this.variantDetailMap[key]) {
       this.variantDetailMap[key] = { price: 0, stock: 0, imageVariant: '' };
     }
     this.variantDetailMap[key][field] = value;
+    variant[field] = value; // reflect in UI
   }
 
   preserveVariantDetails(
     oldCombinations: string[][],
     newCombinations: string[][],
-    optionNames: string[]
+    optionNames: string[],
+    previousUsedOptions: string[] // 👈 use this for correct matching
   ) {
     const newMap: { [key: string]: any } = {};
     const oldMap = { ...this.variantDetailMap };
 
+    const oldVariants = Object.keys(oldMap).map((key) => {
+      const parts = key.split('||');
+      const obj: { [key: string]: string } = {};
+      previousUsedOptions.forEach((opt, idx) => {
+        obj[opt] = parts[idx];
+      });
+      return { key, values: obj };
+    });
+
     newCombinations.forEach((combo) => {
-      const key = combo.join('||');
-      newMap[key] = oldMap[key] || { price: 0, stock: 0, imageVariant: '' };
+      const newKey = combo.join('||');
+      const comboObj: { [key: string]: string } = {};
+      optionNames.forEach((name, idx) => {
+        comboObj[name] = combo[idx];
+      });
+
+      const matched = oldVariants.find((old) =>
+        Object.entries(old.values).every(
+          ([key, value]) => comboObj[key] === value
+        )
+      );
+
+      newMap[newKey] = {
+        price: matched ? oldMap[matched.key].price : 0,
+        stock: matched ? oldMap[matched.key].stock : 0,
+        imageVariant: matched ? oldMap[matched.key].imageVariant : '',
+      };
     });
 
     this.variantDetailMap = newMap;
@@ -282,10 +321,9 @@ export class EditProductComponent {
       this.variantValues[opt]?.some((val) => val.trim() !== '')
     );
   }
-
   openVariantMediaModal(variant: any): void {
     this.currentVariantForImage = variant;
-    const key = this.getVariantKey(variant);
+    const key = this.getVariantKeyObject(variant); // ✅ Use new method
     this.currentVariantImage = this.variantDetailMap[key]?.imageVariant || '';
 
     // Open modal
@@ -293,11 +331,11 @@ export class EditProductComponent {
   }
 
   onModalConfirmSelection(selectedUrls: string[]): void {
-    if (this.currentVariantForImage) {
+    if (this.currentVariantForImage && selectedUrls[0]) {
       this.updateVariantDetail(
         this.currentVariantForImage,
         'imageVariant',
-        selectedUrls[0] || ''
+        selectedUrls[0]
       );
       this.currentVariantForImage = null;
     }
@@ -390,23 +428,26 @@ export class EditProductComponent {
     const editableKeys = ['size', 'color', 'material'];
 
     variants.forEach((v) => {
-      const keyParts: string[] = [];
+      const keyParts: { [key: string]: string } = {};
+
       editableKeys.forEach((k) => {
         const val = v[k];
         if (val) {
-          this.usedOptions.add(this.capitalize(k));
-          if (!this.variantValues[this.capitalize(k)]) {
-            this.variantValues[this.capitalize(k)] = [];
+          const capitalizedKey = this.capitalize(k);
+          this.usedOptions.add(capitalizedKey);
+          if (!this.variantValues[capitalizedKey]) {
+            this.variantValues[capitalizedKey] = [];
           }
-          if (!this.variantValues[this.capitalize(k)].includes(val)) {
-            this.variantValues[this.capitalize(k)].push(val);
+          if (!this.variantValues[capitalizedKey].includes(val)) {
+            this.variantValues[capitalizedKey].push(val);
           }
-          keyParts.push(val);
+          keyParts[capitalizedKey] = val;
         }
       });
 
-      const key = keyParts.join('||');
-      this.variantDetailMap[key] = {
+      const variantKey = this.getVariantKeyObject(keyParts);
+
+      this.variantDetailMap[variantKey] = {
         price: v.price ?? 0,
         stock: v.stock ?? 0,
         imageVariant: v.imageVariant ?? '',
