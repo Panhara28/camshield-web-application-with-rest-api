@@ -18,10 +18,17 @@ export class SingleMediaLibraryComponent {
   @Input() medias: any[] = [];
   @Output() confirmSelection = new EventEmitter<string[]>();
   @Output() uploadSelectedFiles = new EventEmitter<FileList>();
+  @Input() selectedImageUrl: string | null = null;
 
   @ViewChild('modalFileInput') modalFileInput!: ElementRef<HTMLInputElement>;
   selectedMediaUrl: string | null = null;
   selectedMediaUrls: Set<string> = new Set();
+
+  ngOnChanges() {
+    if (this.selectedImageUrl) {
+      this.selectedMediaUrl = this.selectedImageUrl;
+    }
+  }
 
   toggleMediaSelection(url: string) {
     this.selectedMediaUrl = url;
