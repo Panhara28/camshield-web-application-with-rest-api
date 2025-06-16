@@ -90,7 +90,7 @@ export class EditProductComponent {
   @ViewChild(SingleMediaLibraryComponent)
   mediaLibraryModal!: SingleMediaLibraryComponent;
 
-  groupBy: string = 'Size';
+  groupBy: string = 'size';
   defaultVariantOptions = ['Size', 'Color', 'Material'];
   profit: string = '';
   margin: string = '';
@@ -125,7 +125,7 @@ export class EditProductComponent {
     // This can remain as-is for the full media library for other components
     this.route.queryParams.subscribe((params) => {
       this.mediaService.getMedias(params).subscribe((res) => {
-        this.productId = res.id;
+        // this.productId = res.id;
 
         this.medias = res.data;
         this.meta = res.meta;
@@ -314,10 +314,10 @@ export class EditProductComponent {
     const oldMap = { ...this.variantDetailMap };
 
     const oldVariants = Object.keys(oldMap).map((key) => {
-      const parts = key.split('||');
+      const parsed = JSON.parse(key);
       const obj: { [key: string]: string } = {};
       previousUsedOptions.forEach((opt, idx) => {
-        obj[opt] = parts[idx];
+        obj[opt] = parsed[idx];
       });
       return { key, values: obj };
     });
@@ -482,9 +482,7 @@ export class EditProductComponent {
       [[]] as string[][]
     );
   }
-  capitalize(word: string): string {
-    return word.charAt(0).toUpperCase() + word.slice(1);
-  }
+
   populateVariantState(variants: any[]) {
     this.variantDetailMap = {};
     this.variantValues = {};
