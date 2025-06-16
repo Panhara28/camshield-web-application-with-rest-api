@@ -46,7 +46,7 @@ export class EditProductComponent {
   @ViewChild('groupBySelect') groupBySelect!: ElementRef;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
   variantMediaOnly: any[] = []; // Add this
-
+  totalInventory: number | any = 0;
   product: any = {
     title: '',
     description: '',
@@ -94,7 +94,6 @@ export class EditProductComponent {
   defaultVariantOptions = ['Size', 'Color', 'Material'];
   profit: string = '';
   margin: string = '';
-  totalInventory: number = 0;
   constructor(
     private route: ActivatedRoute,
     private mediaService: MediaService,
@@ -280,6 +279,7 @@ export class EditProductComponent {
 
     this.groupedVariantData = grouped;
     this.showVariantsTable = this.hasValidVariants();
+    this.updateTotalInventory();
   }
 
   getVariantKeyObject(variant: any): string {
@@ -302,6 +302,9 @@ export class EditProductComponent {
     }
     this.variantDetailMap[key][field] = value;
     variant[field] = value; // reflect in UI
+    if (field === 'stock') {
+      this.updateTotalInventory();
+    }
   }
 
   preserveVariantDetails(
@@ -546,5 +549,13 @@ export class EditProductComponent {
       this.variantDetailMap[key].stock = variant.stock ?? 0;
       this.variantDetailMap[key].imageVariant = variant.imageVariant ?? '';
     }
+    this.updateTotalInventory();
+  }
+
+  updateTotalInventory(): void {
+    this.totalInventory = Object.values(this.variantDetailMap).reduce(
+      (sum, variant: any) => sum + (variant.stock || 0),
+      0
+    );
   }
 }
