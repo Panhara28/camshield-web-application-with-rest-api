@@ -181,8 +181,89 @@ export class EditProductComponent {
   }
 
   removeOption(option: string) {
+    const previousVariantDetailMap = { ...this.variantDetailMap }; // ✅ Backup
+    const previousUsedOptions = this.usedOptionsArray;
+
     this.usedOptions.delete(option);
     delete this.variantValues[option];
+
+    // Rebuild variant table and preserve data
+    this.generateGroupedVariantsObjectWithPreserve(
+      previousVariantDetailMap,
+      previousUsedOptions
+    );
+  }
+
+  generateGroupedVariantsObjectWithPreserve(
+    oldMap: { [key: string]: any },
+    previousUsedOptions: string[]
+  ) {
+    this.syncTableToVariantMap(); // ✅ Capture latest edits before rebuilding
+
+    const cleanedOptions = this.usedOptionsArray
+      .filter((opt) => this.variantValues[opt]?.length)
+      .map((opt) => ({
+        name: opt,
+        values: this.variantValues[opt]
+          .map((val) => val.trim())
+          .filter((val) => val !== ''),
+      }))
+      .filter((opt) => opt.values.length > 0);
+
+    if (cleanedOptions.length === 0) {
+      this.groupedVariantData = {};
+      this.showVariantsTable = false;
+      return;
+    }
+
+    const optionNames = cleanedOptions.map((opt) => opt.name);
+    const newCombinations = this.cartesian(
+      cleanedOptions.map((opt) => opt.values)
+    );
+
+    const groupBy = optionNames[0];
+    const groupIndex = optionNames.indexOf(groupBy);
+    const grouped: { [key: string]: any[] } = {};
+
+    this.variantDetailMap = {}; // Reset
+
+    newCombinations.forEach((combo) => {
+      const variantObj: { [key: string]: any } = {};
+      combo.forEach((val, idx) => {
+        variantObj[optionNames[idx]] = val;
+      });
+
+      // Try to find matching old data
+      const matchedKey = Object.keys(oldMap).find((oldKey) => {
+        const oldParsed = JSON.parse(oldKey);
+        return Object.entries(variantObj).every(([k, v]) => oldParsed[k] === v);
+      });
+
+      const oldData = matchedKey
+        ? oldMap[matchedKey]
+        : { price: 0, stock: 0, imageVariant: '' };
+
+      const variantKey = this.getVariantKeyObject(variantObj);
+
+      this.variantDetailMap[variantKey] = {
+        price: oldData.price,
+        stock: oldData.stock,
+        imageVariant: oldData.imageVariant,
+      };
+
+      const groupKey = combo[groupIndex];
+      if (!grouped[groupKey]) grouped[groupKey] = [];
+      grouped[groupKey].push({
+        ...variantObj,
+        price: oldData.price,
+        stock: oldData.stock,
+        imageVariant: oldData.imageVariant,
+      });
+    });
+
+    this.groupedVariantData = grouped;
+    this.showVariantsTable = this.hasValidVariants();
+    this.updateTotalInventory();
   }
 
   addOptionValue(option: string) {
