@@ -31,6 +31,14 @@ export class SingleMediaLibraryComponent {
     if (this.selectedImageUrl) {
       this.selectedMediaUrl = this.selectedImageUrl;
     }
+
+    // ✅ Clear if the selected image is not in the updated list
+    if (
+      this.selectedMediaUrl &&
+      !this.medias.find((m) => m.url === this.selectedMediaUrl)
+    ) {
+      this.selectedMediaUrl = null;
+    }
   }
 
   open() {

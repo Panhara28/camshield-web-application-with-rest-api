@@ -369,8 +369,11 @@ export class EditProductComponent {
   }
 
   onMediaUrlsChanged(mediaList: any[]): void {
-    this.product.mediaUrls = [...mediaList]; // ✅ Assign a new array (triggers change detection)
-    this.product.MediaProductDetails = [...mediaList]; // ✅ If your payload uses this
+    this.product.mediaUrls = [...mediaList];
+    this.product.MediaProductDetails = [...mediaList];
+
+    // ✅ Force refresh to ensure modal gets new media
+    this.variantMediaOnly = mediaList.map((m) => ({ ...m }));
   }
 
   submitProductForm(): void {
