@@ -69,6 +69,7 @@ export class EditProductComponent {
         [key: string]: { price: number; stock: number; imageVariant: string };
       }
     | any = {};
+
   variantValues: { [key: string]: string[] } = {};
   groupedVariantData: { [key: string]: any[] } = {};
   usedOptions: Set<string> = new Set();
@@ -204,21 +205,36 @@ export class EditProductComponent {
     this.variantValues[option][index] = input.value.trim();
   }
   generateGroupedVariantsObject() {
-    this.syncTableToVariantMap(); // ✅ Always sync first
+    this.syncTableToVariantMap(); // ✅ Always sync current table edits first
 
+    // Step 1: Clean and validate all used option values
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
       .map((opt) => ({
         name: opt,
-        values: this.variantValues[opt].filter((val) => val.trim() !== ''),
-      }));
+        values: this.variantValues[opt]
+          .map((val) => val.trim())
+          .filter((val) => val !== ''),
+      }))
+      .filter((opt) => opt.values.length > 0); // Ensure no empty-value options get processed
 
-    if (cleanedOptions.length < 1) return;
+    // Step 2: If there's nothing meaningful to generate, skip
+    if (cleanedOptions.length === 0) {
+      this.groupedVariantData = {};
+      this.showVariantsTable = false;
+      return;
+    }
 
     const optionNames = cleanedOptions.map((opt) => opt.name);
     const newCombinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
+
+    if (newCombinations.length === 0) {
+      this.groupedVariantData = {};
+      this.showVariantsTable = false;
+      return;
+    }
 
     const groupBy = optionNames[0];
     const groupIndex = optionNames.indexOf(groupBy);
@@ -233,12 +249,11 @@ export class EditProductComponent {
       const variantKey = this.getVariantKeyObject(variantObj);
       let oldData = this.variantDetailMap[variantKey];
 
-      // ✅ Fallback: Try to find partial match if not found
+      // Try to match partial fallback data if variant not found
       if (!oldData) {
         const fallback = Object.entries(this.variantDetailMap).find(
           ([key, data]) => {
             const parsed = JSON.parse(key);
-            // Match all shared fields (like color + size)
             return Object.entries(parsed).every(([k, v]) => {
               return !variantObj[k] || variantObj[k] === v;
             });
@@ -251,7 +266,7 @@ export class EditProductComponent {
       variantObj.stock = oldData.stock ?? 0;
       variantObj.imageVariant = oldData.imageVariant ?? '';
 
-      // Save to variantDetailMap
+      // Store in variantDetailMap
       this.variantDetailMap[variantKey] = {
         price: variantObj.price,
         stock: variantObj.stock,
