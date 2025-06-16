@@ -1,0 +1,23 @@
+# ───────────── Commit Title (Required) ─────────────
+# Format: <type>(<scope>): <short summary>
+# Example: feat(auth): implement JWT-based login flow
+
+# Allowed types:
+#   feat     - New feature
+#   fix      - Bug fix
+#   docs     - Documentation changes
+#   style    - Code style changes (formatting, missing semi colons, etc.)
+#   refactor - Code change that neither fixes a bug nor adds a feature
+#   test     - Adding or modifying tests
+#   chore    - Maintenance tasks (e.g., build, CI, dependencies)
+
+# ───────────── Commit Body (Optional) ─────────────
+# Describe what and why (not how)
+# Include context, reasoning, design decisions, or limitations
+# Wrap lines at 72 characters for readability
+
+# ───────────── Footer (Optional) ─────────────
+# Reference issues or tickets (JIRA, GitHub, etc.)
+# Example: Closes #123, Related to JIRA-456
+
+# BREAKING CHANGE: <describe breaking API or behavior change>
