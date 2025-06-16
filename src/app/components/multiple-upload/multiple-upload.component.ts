@@ -360,25 +360,15 @@ export class MultipleUploadComponent {
     const remaining = this.confirmedMediaList.slice(0); // exclude the first image
     return this.isExpanded ? remaining : remaining.slice(0, this.maxThumbnails);
   }
-
   getExtraCount(): number {
-    if (this.mutateStatus) {
-      const total = this.mediaUrls?.length || 0;
-      if (total <= 1) return 0;
+    const mediaList = this.mutateStatus
+      ? Array.isArray(this.mediaUrls)
+        ? this.mediaUrls
+        : []
+      : this.confirmedMediaList;
 
-      const remaining = total - 0; // exclude the first image
-      return remaining > this.maxThumbnails
-        ? remaining - this.maxThumbnails
-        : 0;
-    } else {
-      const total = this.confirmedMediaList.length;
-      if (total <= 1) return 0;
-
-      const remaining = total - 0; // exclude the first image
-      return remaining > this.maxThumbnails
-        ? remaining - this.maxThumbnails
-        : 0;
-    }
+    const remaining = mediaList.length - 1; // skip first
+    return remaining > this.maxThumbnails ? remaining - this.maxThumbnails : 0;
   }
 
   clearSelectedMedia(): void {
@@ -450,5 +440,20 @@ export class MultipleUploadComponent {
       },
       error: (err) => console.error('Failed to fetch medias:', err),
     });
+  }
+
+  getVisibleMediaList(): any[] {
+    const mediaList = this.mutateStatus
+      ? Array.isArray(this.mediaUrls)
+        ? this.mediaUrls
+        : []
+      : this.confirmedMediaList;
+
+    if (mediaList.length <= 1) return [];
+
+    // skip first image
+    const rest = mediaList.slice(1);
+
+    return this.isExpanded ? rest : rest.slice(0, this.maxThumbnails);
   }
 }

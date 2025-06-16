@@ -88,10 +88,7 @@
       <div class="col-md-8 pe-0">
         <div class="row g-3">
           <ng-container
-            *ngFor="
-              let media of mutateStatus ? mediaUrls : getConfirmedMediaList();
-              let i = index
-            "
+            *ngFor="let media of getVisibleMediaList(); let i = index"
           >
             <div class="col-6 col-md-3" (click)="onMediaClicked(media)" cdkDrag>
               <div
