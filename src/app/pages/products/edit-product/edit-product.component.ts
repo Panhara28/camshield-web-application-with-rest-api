@@ -112,8 +112,8 @@ export class EditProductComponent {
       if (slug) {
         this.productDetailService.getProductDetailBySlug(slug).subscribe({
           next: (res: any) => {
-            this.product = { ...res };
-            this.variantMediaOnly = res.MediaProductDetails || []; // <-- NEW
+            this.product = { ...res, id: res.id }; // ✅ Ensure product.id exists
+            this.variantMediaOnly = res.MediaProductDetails || [];
             this.populateVariantState(res.variants);
             this.updateProfitMargin();
           },
