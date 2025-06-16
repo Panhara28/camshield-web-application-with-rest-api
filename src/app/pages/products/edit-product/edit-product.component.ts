@@ -369,15 +369,36 @@ export class EditProductComponent {
   }
 
   onMediaUrlsChanged(mediaList: any[]): void {
+    // Update product model
     this.product.mediaUrls = [...mediaList];
     this.product.MediaProductDetails = [...mediaList];
 
-    // ✅ Force refresh to ensure modal gets new media
+    // ✅ Ensure variant modal only gets current images (no stale ones)
     this.variantMediaOnly = mediaList.map((m) => ({ ...m }));
+
+    // ✅ Also, if any variant still points to a removed image, remove it
+    const validUrls = new Set(mediaList.map((m) => m.url));
+    Object.keys(this.variantDetailMap).forEach((key) => {
+      const image = this.variantDetailMap[key].imageVariant;
+      if (image && !validUrls.has(image)) {
+        this.variantDetailMap[key].imageVariant = '';
+      }
+    });
   }
 
   submitProductForm(): void {
-    this.syncTableToVariantMap(); // ✅ Sync all edits first
+    this.syncTableToVariantMap(); // ✅ Sync table first
+
+    const validUrls = new Set(
+      (this.variantMediaOnly || []).map((m: any) => m.url)
+    );
+
+    Object.keys(this.variantDetailMap).forEach((key) => {
+      const imgUrl = this.variantDetailMap[key]?.imageVariant;
+      if (imgUrl && !validUrls.has(imgUrl)) {
+        this.variantDetailMap[key].imageVariant = '';
+      }
+    });
 
     const cleanedOptions = this.usedOptionsArray
       .filter((opt) => this.variantValues[opt]?.length)
@@ -389,7 +410,7 @@ export class EditProductComponent {
     const combinations = this.cartesian(
       cleanedOptions.map((opt) => opt.values)
     );
-    const optionNames = cleanedOptions.map((opt) => opt.name); // e.g. ['Size', 'Color', 'Material']
+    const optionNames = cleanedOptions.map((opt) => opt.name);
 
     const variants = combinations.map((combo, idx) => {
       const variant: any = {};
