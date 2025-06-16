@@ -6,39 +6,50 @@ import {
   Input,
   Output,
   ViewChild,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import { Modal } from 'bootstrap';
 
 @Component({
   selector: 'app-single-media-library',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './single-media-library.component.html',
   styleUrl: './single-media-library.component.css',
 })
-export class SingleMediaLibraryComponent {
+export class SingleMediaLibraryComponent implements OnChanges {
   @Input() medias: any[] = [];
   @Output() confirmSelection = new EventEmitter<string[]>();
   @Output() uploadSelectedFiles = new EventEmitter<FileList>();
   @Input() selectedImageUrl: string | null = null;
-  @Input() productId!: number; // ✅ Add this line
+  @Input() productId!: number;
   @ViewChild('modalRef', { static: false }) modalRef!: ElementRef;
-
   @ViewChild('modalFileInput') modalFileInput!: ElementRef<HTMLInputElement>;
+
   selectedMediaUrl: string | null = null;
   selectedMediaUrls: Set<string> = new Set();
 
-  ngOnChanges() {
-    if (this.selectedImageUrl) {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedImageUrl'] && this.selectedImageUrl) {
       this.selectedMediaUrl = this.selectedImageUrl;
     }
 
-    // ✅ Clear if the selected image is not in the updated list
+    if (changes['medias']) {
+      this.refreshMediaList();
+    }
+
     if (
       this.selectedMediaUrl &&
       !this.medias.find((m) => m.url === this.selectedMediaUrl)
     ) {
       this.selectedMediaUrl = null;
     }
+  }
+
+  // 🔄 Force change detection-friendly re-assignment
+  refreshMediaList(): void {
+    this.medias = [...this.medias];
   }
 
   open() {
@@ -56,7 +67,7 @@ export class SingleMediaLibraryComponent {
 
   onModalConfirmSelection() {
     if (this.selectedMediaUrl) {
-      this.confirmSelection.emit([this.selectedMediaUrl]); // still emit array for consistency
+      this.confirmSelection.emit([this.selectedMediaUrl]);
     }
   }
 }

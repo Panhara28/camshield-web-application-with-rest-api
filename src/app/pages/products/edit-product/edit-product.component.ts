@@ -283,10 +283,12 @@ export class EditProductComponent {
   }
 
   getVariantKeyObject(variant: any): string {
-    const entries = Object.entries(variant)
-      .filter(([k]) => this.usedOptions.has(k))
-      .sort(([a], [b]) => a.localeCompare(b));
-    return JSON.stringify(Object.fromEntries(entries));
+    const normalizedEntries = Object.entries(variant)
+      .filter(([key]) => this.usedOptions.has(key.toLowerCase()))
+      .map(([key, value]) => [key.toLowerCase(), value])
+      .sort(([a]: any, [b]) => a.localeCompare(b)); // consistent key order
+
+    return JSON.stringify(Object.fromEntries(normalizedEntries));
   }
 
   updateVariantDetail(
@@ -369,14 +371,10 @@ export class EditProductComponent {
   }
 
   onMediaUrlsChanged(mediaList: any[]): void {
-    // Update product model
     this.product.mediaUrls = [...mediaList];
     this.product.MediaProductDetails = [...mediaList];
-
-    // ✅ Ensure variant modal only gets current images (no stale ones)
     this.variantMediaOnly = mediaList.map((m) => ({ ...m }));
 
-    // ✅ Also, if any variant still points to a removed image, remove it
     const validUrls = new Set(mediaList.map((m) => m.url));
     Object.keys(this.variantDetailMap).forEach((key) => {
       const image = this.variantDetailMap[key].imageVariant;
@@ -384,6 +382,11 @@ export class EditProductComponent {
         this.variantDetailMap[key].imageVariant = '';
       }
     });
+
+    // ✅ Refresh modal if already initialized
+    if (this.mediaLibraryModal?.refreshMediaList) {
+      this.mediaLibraryModal.refreshMediaList();
+    }
   }
 
   submitProductForm(): void {
@@ -495,15 +498,15 @@ export class EditProductComponent {
       editableKeys.forEach((k) => {
         const val = v[k];
         if (val) {
-          const capitalizedKey = this.capitalize(k);
-          this.usedOptions.add(capitalizedKey);
-          if (!this.variantValues[capitalizedKey]) {
-            this.variantValues[capitalizedKey] = [];
+          const lowerKey = k.toLowerCase();
+          this.usedOptions.add(lowerKey);
+          if (!this.variantValues[lowerKey]) {
+            this.variantValues[lowerKey] = [];
           }
-          if (!this.variantValues[capitalizedKey].includes(val)) {
-            this.variantValues[capitalizedKey].push(val);
+          if (!this.variantValues[lowerKey].includes(val)) {
+            this.variantValues[lowerKey].push(val);
           }
-          keyParts[capitalizedKey] = val;
+          keyParts[lowerKey] = val;
         }
       });
 
