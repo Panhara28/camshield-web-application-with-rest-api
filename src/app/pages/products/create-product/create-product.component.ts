@@ -51,6 +51,7 @@ export class CreateProductComponent {
     optionValue: any[];
   }[] = [];
   variants: any[] = ['size', 'color', 'material'];
+  genearateVaraints: any[] = [];
 
   addOption() {
     const nextIndex = this.variantOptions.length;
@@ -90,7 +91,41 @@ export class CreateProductComponent {
       values: opt.optionValue.map((v: any) => v.value).filter(Boolean),
     }));
 
-    console.log('Result', result);
+    result.map((r: any) => {
+      console.log(r);
+      this.genearateVaraints.push({
+        variants: r.values,
+      });
+    });
+
+    this.generateCombinations(this.genearateVaraints);
+
+    console.log('this.genearateVaraints;', this.genearateVaraints);
+  }
+
+  generateCombinations(input: any[]): any {
+    if (!input || input.length === 0) return [];
+    console.log(input);
+
+    // Extract only the arrays of variant values
+    const arrays = input.map((item) => item.variants);
+    // Cartesian product logic
+    const cartesian = (arr: string[][]): string[][] => {
+      return arr.reduce(
+        (a, b) => {
+          return a.flatMap((d) => b.map((e) => [...d, e]));
+        },
+        [[]] as string[][]
+      );
+    };
+
+    const combinations = cartesian(arrays);
+    console.log(
+      'combo',
+      combinations.map((combo) => combo.join(' / '))
+    );
+    // // Join combinations into "M / Red / Leather" format
+    return combinations.map((combo) => combo.join(' / '));
   }
 
   product: any = {
