@@ -206,6 +206,10 @@ export class CreateProductComponent {
             'saveToLocalStorage',
             JSON.stringify(this.varaintOptionsLocalStorage)
           );
+          localStorage.setItem(
+            'groupedVariants',
+            JSON.stringify(this.groupedVariantsLocalStorage)
+          );
           return opt.optionValue
             .map((val: any) => (val.value || '').trim())
             .filter((v: any) => v !== '');
@@ -299,6 +303,7 @@ export class CreateProductComponent {
     }));
 
     this.groupedVariants = this.groupVariantsByFirstOption();
+    // Tomorrow working with this function about groupVariants not update in UI but in localStorage
     localStorage.setItem(
       'groupedVariants',
       JSON.stringify(this.groupedVariants)
