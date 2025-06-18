@@ -19,6 +19,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { CategoryService } from '../../../services/categories-service';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { LocalStorageServiceForAddVaraintOptionService } from '../../../services/LocalStorageServiceForAddVaraintOption';
+import { LocalStorageServiceForGroupedVariantsService } from '../../../services/LocalStorageServiceForGroupedVariants';
 
 interface PaginationMeta {
   page?: number;
@@ -55,42 +57,173 @@ export class CreateProductComponent {
 
   generateVariants: { combo: string; price: number; stock: number }[] = [];
   variantCombinations: string[] = [];
+  groupedVariants: any[] = [];
+  varaintOptionsLocalStorage: any[] = [];
+  groupedVariantsLocalStorage: any[] = [];
+
+  constructor(
+    private route: ActivatedRoute,
+    private mediaService: MediaService,
+    private createProductService: CreateProductService,
+    private snackBar: MatSnackBar,
+    private categoryService: CategoryService,
+    private router: Router,
+    private localStorageServiceForAddVaraintOptionService: LocalStorageServiceForAddVaraintOptionService,
+    private localStorageServiceForGroupedVariantsService: LocalStorageServiceForGroupedVariantsService
+  ) {}
+
+  ngOnInit() {
+    this.localStorageServiceForAddVaraintOptionService
+      .changes()
+      .subscribe((data: any) => {
+        console.log('data', data);
+        if (!data) {
+          localStorage.setItem('saveToLocalStorage', '[]');
+        } else {
+          this.varaintOptionsLocalStorage = JSON.parse(data);
+        }
+      });
+
+    this.localStorageServiceForGroupedVariantsService
+      .changes()
+      .subscribe((data: any) => {
+        console.log('data', data);
+        if (!data) {
+          localStorage.setItem('groupedVariants', '[]');
+        } else {
+          this.groupedVariantsLocalStorage = JSON.parse(data);
+        }
+      });
+
+    this.fetchCategories();
+    this.route.queryParams.subscribe((params) => {
+      this.mediaService.getMedias(params).subscribe((res) => {
+        this.medias = res.data;
+        this.meta = res.meta;
+      });
+    });
+  }
 
   addOption() {
-    const nextIndex = this.variantOptions.length;
-    if (nextIndex < this.variants.length) {
-      this.variantOptions.push({
-        optionName: this.variants[nextIndex],
-        optionValue: [{ value: null }],
-      });
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      const nextIndex = this.varaintOptionsLocalStorage.length;
+      if (nextIndex < this.variants.length) {
+        this.varaintOptionsLocalStorage.push({
+          optionName: this.variants[nextIndex],
+          optionValue: [{ value: null }],
+        });
+
+        localStorage.setItem(
+          'saveToLocalStorage',
+          JSON.stringify(this.varaintOptionsLocalStorage)
+        );
+      }
+    } else {
+      const nextIndex = this.variantOptions.length;
+      if (nextIndex < this.variants.length) {
+        this.variantOptions.push({
+          optionName: this.variants[nextIndex],
+          optionValue: [{ value: null }],
+        });
+
+        localStorage.setItem(
+          'saveToLocalStorage',
+          JSON.stringify(this.variantOptions)
+        );
+      }
     }
   }
 
   removeOption(optionIndex: number) {
-    this.variantOptions.splice(optionIndex, 1);
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      this.varaintOptionsLocalStorage.splice(optionIndex, 1);
+
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.varaintOptionsLocalStorage)
+      );
+    } else {
+      this.variantOptions.splice(optionIndex, 1);
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.variantOptions)
+      );
+    }
   }
 
   addVariantOptionValue(optionName: string) {
-    const findVariant = this.variantOptions.find(
-      (item) => item.optionName === optionName
-    );
-    if (findVariant) {
-      findVariant.optionValue.push({ value: null });
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      const findVariant = this.varaintOptionsLocalStorage.find(
+        (item) => item.optionName === optionName
+      );
+
+      if (findVariant) {
+        findVariant.optionValue.push({ value: null });
+      }
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.varaintOptionsLocalStorage)
+      );
+    } else {
+      const findVariant = this.variantOptions.find(
+        (item) => item.optionName === optionName
+      );
+
+      if (findVariant) {
+        findVariant.optionValue.push({ value: null });
+      }
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.variantOptions)
+      );
     }
   }
 
   removeVariantOptionValue(optionIndex: number, valueIndex: number) {
-    this.variantOptions[optionIndex].optionValue.splice(valueIndex, 1);
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      this.varaintOptionsLocalStorage[optionIndex].optionValue.splice(
+        valueIndex,
+        1
+      );
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.varaintOptionsLocalStorage)
+      );
+    } else {
+      this.variantOptions[optionIndex].optionValue.splice(valueIndex, 1);
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.variantOptions)
+      );
+    }
   }
 
   getCleanedOptions(): string[][] {
-    return this.variantOptions
-      .map((opt) =>
-        opt.optionValue
-          .map((val) => (val.value || '').trim())
-          .filter((v) => v !== '')
-      )
-      .filter((values) => values.length > 0); // Ignore empty variant groups
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      return this.varaintOptionsLocalStorage
+        .map((opt) => {
+          localStorage.setItem(
+            'saveToLocalStorage',
+            JSON.stringify(this.varaintOptionsLocalStorage)
+          );
+          return opt.optionValue
+            .map((val: any) => (val.value || '').trim())
+            .filter((v: any) => v !== '');
+        })
+        .filter((values) => values.length > 0); // Ignore empty existed variant groups
+    } else {
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.variantOptions)
+      );
+      return this.variantOptions
+        .map((opt) => {
+          return opt.optionValue
+            .map((val) => (val.value || '').trim())
+            .filter((v) => v !== '');
+        })
+        .filter((values) => values.length > 0); // Ignore empty variant groups
+    }
   }
 
   generateCombinations(): string[] {
@@ -107,6 +240,47 @@ export class CreateProductComponent {
     return cartesian(values).map((combo: any) => combo.join(' / '));
   }
 
+  groupVariantsByFirstOption() {
+    const grouped: {
+      groupBySize: string;
+      variants: {
+        combo: string;
+        price: number;
+        stock: number;
+        image: string;
+      }[];
+    }[] = [];
+
+    const map = new Map<string, any[]>();
+
+    for (const variant of this.generateVariants) {
+      const parts = variant.combo.split(' / ');
+      const groupKey = parts[0]; // Assume first option is Size
+
+      const entry = {
+        combo: variant.combo,
+        price: variant.price,
+        stock: variant.stock,
+        image: '', // Default image
+      };
+
+      if (!map.has(groupKey)) {
+        map.set(groupKey, [entry]);
+      } else {
+        map.get(groupKey)?.push(entry);
+      }
+    }
+
+    // Format into final structure
+    for (const [key, variants] of map.entries()) {
+      grouped.push({
+        groupBySize: key,
+        variants: variants,
+      });
+    }
+    return grouped;
+  }
+
   getAllVariantValues() {
     // Clear old data
     this.generateVariants = [];
@@ -121,9 +295,23 @@ export class CreateProductComponent {
       combo,
       price: 0,
       stock: 0,
+      image: '',
     }));
 
-    console.log('Generated Variant Objects:', this.generateVariants);
+    this.groupedVariants = this.groupVariantsByFirstOption();
+    localStorage.setItem(
+      'groupedVariants',
+      JSON.stringify(this.groupedVariants)
+    );
+  }
+
+  selecteOpenByVaraint(groupBySize: string, groupId: number) {
+    const selectedIndex = groupBySize + '/' + groupId.toString();
+    console.log('selectedIndex', selectedIndex.replace(/\s+/g, ''));
+  }
+
+  saveTheVaraintToLocalStorage() {
+    console.log(this.groupedVariants);
   }
 
   product: any = {
@@ -158,24 +346,6 @@ export class CreateProductComponent {
   totalInventory: number = 0;
   multipleUploadService: any;
 
-  constructor(
-    private route: ActivatedRoute,
-    private mediaService: MediaService,
-    private createProductService: CreateProductService,
-    private snackBar: MatSnackBar,
-    private categoryService: CategoryService,
-    private router: Router
-  ) {}
-
-  ngOnInit() {
-    this.fetchCategories();
-    this.route.queryParams.subscribe((params) => {
-      this.mediaService.getMedias(params).subscribe((res) => {
-        this.medias = res.data;
-        this.meta = res.meta;
-      });
-    });
-  }
   // Fetch and flatten category tree, then extract top-level categories
   fetchCategories(): void {
     this.categoryService.getCategoryTree().subscribe({
