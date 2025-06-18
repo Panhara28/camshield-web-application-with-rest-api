@@ -131,7 +131,7 @@
         <div class="card">
           <div class="card-title">Variants</div>
           <div class="card p-4 shadow-sm">
-            <div class="card-body" *ngFor="let opt of usedOptionsArray">
+            <div class="card-body">
               <div class="mb-3">
                 <label class="form-label fw-semibold">Option name</label>
                 <div class="input-group">
@@ -143,21 +143,13 @@
                     class="form-control border-start-0"
                     value="Size"
                     disabled
-                    [value]="opt"
                   />
                 </div>
               </div>
 
               <div class="mb-2">
                 <label class="form-label fw-semibold">Option values</label>
-                <div
-                  class="input-group mb-2"
-                  *ngFor="
-                    let val of variantValues[opt];
-                    let i = index;
-                    trackBy: trackByIndex
-                  "
-                >
+                <div class="input-group mb-2">
                   <span class="input-group-text bg-white border-end-0">
                     <i class="fa fa-grip-vertical"></i>
                   </span>
@@ -165,77 +157,48 @@
                     type="text"
                     class="form-control border-start-0"
                     placeholder="Add Value"
-                    [(ngModel)]="variantValues[opt][i]"
                   />
-                  <button
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="removeOptionValue(opt, i)"
-                  >
+                  <button class="btn btn-outline-secondary" type="button">
                     <i class="fa fa-trash"></i>
                   </button>
                 </div>
-                <button
-                  class="btn btn-sm btn-primary"
-                  (click)="addOptionValue(opt)"
-                >
+                <button class="btn btn-sm btn-primary">
                   <i class="fa fa-plus me-1"></i> Add Value
                 </button>
               </div>
 
               <div class="d-flex justify-content-between mt-3">
-                <button
-                  class="btn btn-outline-danger"
-                  (click)="removeOption(opt)"
-                >
-                  Delete
-                </button>
-                <button
-                  class="btn btn-dark"
-                  (click)="generateGroupedVariantsObject()"
-                >
-                  Done
-                </button>
+                <button class="btn btn-outline-danger">Delete</button>
+                <button class="btn btn-dark">Done</button>
               </div>
             </div>
-            <div
-              class="card-footer bg-white py-3"
-              style="border-top: none"
-              (click)="addOption()"
-            >
+            <div class="card-footer bg-white py-3" style="border-top: none">
               <div class="text-decoration-none">
                 <i class="fa fa-plus-circle me-1"></i> Add another option
               </div>
             </div>
           </div>
-          <div class="variant-card" *ngIf="showVariantsTable">
+          <div class="variant-card">
             <div class="variant-header d-flex justify-content-between">
               <span>Variant · Collapse all</span>
               <span class="d-none d-md-block">Price</span>
               <span class="d-none d-md-block">Available</span>
             </div>
 
-            <div *ngFor="let group of groupedVariantData | keyvalue">
+            <div>
               <div class="variant-group mb-3">
                 <!-- Group Header -->
                 <div
                   class="bg-light px-3 py-2 d-flex justify-content-between align-items-center border"
-                  (click)="toggleGroupCollapse(group.key)"
                   style="cursor: pointer"
                 >
-                  <strong>{{ group.key }}</strong>
-                  <i
-                    class="fa"
-                    [ngClass]="{
-                      'fa-chevron-down': !isGroupCollapsed(group.key),
-                      'fa-chevron-up': isGroupCollapsed(group.key)
-                    }"
-                  ></i>
+                  <strong>123123</strong>
+                  <i class="fa"></i>
                 </div>
 
                 <!-- Group Body -->
-                <div *ngIf="!isGroupCollapsed(group.key)">
-                  <div class="variant-row" *ngFor="let variant of group.value">
+                <div>
+                  <div class="variant-row">
                     <input
                       type="checkbox"
                       class="form-check-input me-2"
@@ -243,9 +206,6 @@
                     />
                     <div
                       class="variant-image"
-                      data-bs-toggle="modal"
-                      data-bs-target="#singleMediaModal"
-                      (click)="openVariantMediaModal(variant)"
                       style="
                         width: 80px;
                         height: 80px;
@@ -260,18 +220,8 @@
                         position: relative;
                       "
                     >
-                      <ng-container
-                        *ngIf="
-                          variantDetailMap[getVariantKey(variant)]
-                            ?.imageVariant;
-                          else placeholderIcon
-                        "
-                      >
+                      <ng-container>
                         <img
-                          [src]="
-                            variantDetailMap[getVariantKey(variant)]
-                              .imageVariant
-                          "
                           alt="Variant Image"
                           style="width: 100%; height: 100%; object-fit: cover"
                         />
@@ -286,26 +236,15 @@
                     </div>
 
                     <div class="variant-text d-flex">
-                      <div *ngFor="let opt of usedOptionsArray">
-                        <span class="me-2">{{ variant[opt] }} </span>
+                      <div>
+                        <span class="me-2">123 </span>
                         <span class="me-2">/</span>
                       </div>
                     </div>
-                    <input
-                      type="text"
-                      class="form-control variant-price"
-                      [(ngModel)]="variant.price"
-                      (ngModelChange)="
-                        updateVariantDetail(variant, 'price', $event)
-                      "
-                    />
+                    <input type="text" class="form-control variant-price" />
                     <input
                       type="number"
                       class="form-control variant-available"
-                      [(ngModel)]="variant.stock"
-                      (ngModelChange)="
-                        updateVariantDetail(variant, 'stock', $event)
-                      "
                     />
                   </div>
                 </div>
