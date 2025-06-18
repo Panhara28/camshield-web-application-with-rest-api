@@ -45,6 +45,53 @@ interface PaginationMeta {
 })
 export class CreateProductComponent {
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
+  // Variant Section
+  variantOptions: {
+    optionName: string;
+    optionValue: any[];
+  }[] = [];
+  variants: any[] = ['size', 'color', 'material'];
+
+  addOption() {
+    const nextIndex = this.variantOptions.length;
+    if (nextIndex < this.variants.length) {
+      this.variantOptions.push({
+        optionName: this.variants[nextIndex],
+        optionValue: [{ value: null }],
+      });
+    } else {
+      return;
+    }
+  }
+
+  removeOption(optionIndex: number) {
+    const indexToBeRemoved = optionIndex;
+    this.variantOptions.splice(indexToBeRemoved, 1);
+  }
+
+  addVariantOptionValue(optionName: string) {
+    const findVaraint = this.variantOptions.find(
+      (item) => item.optionName == optionName
+    );
+
+    findVaraint?.optionValue.push({
+      value: null,
+    });
+    console.log('variantOptions', this.variantOptions);
+  }
+
+  removeVariantOptionValue(optionIndex: number, valueIndex: number) {
+    this.variantOptions[optionIndex].optionValue.splice(valueIndex, 1);
+  }
+
+  getAllVariantValues() {
+    const result = this.variantOptions.map((opt: any) => ({
+      optionName: opt.optionName,
+      values: opt.optionValue.map((v: any) => v.value).filter(Boolean),
+    }));
+
+    console.log('Result', result);
+  }
 
   product: any = {
     title: '',
