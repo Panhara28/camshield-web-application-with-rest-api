@@ -48,10 +48,13 @@ export class CreateProductComponent {
   // Variant Section
   variantOptions: {
     optionName: string;
-    optionValue: any[];
+    optionValue: { value: string | null }[];
   }[] = [];
-  variants: any[] = ['size', 'color', 'material'];
-  genearateVaraints: any[] = [];
+
+  variants: string[] = ['size', 'color', 'material'];
+
+  generateVariants: { combo: string; price: number; stock: number }[] = [];
+  variantCombinations: string[] = [];
 
   addOption() {
     const nextIndex = this.variantOptions.length;
@@ -60,72 +63,67 @@ export class CreateProductComponent {
         optionName: this.variants[nextIndex],
         optionValue: [{ value: null }],
       });
-    } else {
-      return;
     }
   }
 
   removeOption(optionIndex: number) {
-    const indexToBeRemoved = optionIndex;
-    this.variantOptions.splice(indexToBeRemoved, 1);
+    this.variantOptions.splice(optionIndex, 1);
   }
 
   addVariantOptionValue(optionName: string) {
-    const findVaraint = this.variantOptions.find(
-      (item) => item.optionName == optionName
+    const findVariant = this.variantOptions.find(
+      (item) => item.optionName === optionName
     );
-
-    findVaraint?.optionValue.push({
-      value: null,
-    });
-    console.log('variantOptions', this.variantOptions);
+    if (findVariant) {
+      findVariant.optionValue.push({ value: null });
+    }
   }
 
   removeVariantOptionValue(optionIndex: number, valueIndex: number) {
     this.variantOptions[optionIndex].optionValue.splice(valueIndex, 1);
   }
 
-  getAllVariantValues() {
-    const result = this.variantOptions.map((opt: any) => ({
-      optionName: opt.optionName,
-      values: opt.optionValue.map((v: any) => v.value).filter(Boolean),
-    }));
-
-    result.map((r: any) => {
-      console.log(r);
-      this.genearateVaraints.push({
-        variants: r.values,
-      });
-    });
-
-    this.generateCombinations(this.genearateVaraints);
-
-    console.log('this.genearateVaraints;', this.genearateVaraints);
+  getCleanedOptions(): string[][] {
+    return this.variantOptions
+      .map((opt) =>
+        opt.optionValue
+          .map((val) => (val.value || '').trim())
+          .filter((v) => v !== '')
+      )
+      .filter((values) => values.length > 0); // Ignore empty variant groups
   }
 
-  generateCombinations(input: any[]): any {
-    if (!input || input.length === 0) return [];
-    console.log(input);
+  generateCombinations(): string[] {
+    const values = this.getCleanedOptions();
+    if (!values.length) return [];
 
-    // Extract only the arrays of variant values
-    const arrays = input.map((item) => item.variants);
-    // Cartesian product logic
-    const cartesian = (arr: string[][]): string[][] => {
+    const cartesian = (arr: string[][]): string[][] | any => {
       return arr.reduce(
-        (a, b) => {
-          return a.flatMap((d) => b.map((e) => [...d, e]));
-        },
-        [[]] as string[][]
+        (a: any, b: any) => a.flatMap((d: any) => b.map((e: any) => [...d, e])),
+        [[]]
       );
     };
 
-    const combinations = cartesian(arrays);
-    console.log(
-      'combo',
-      combinations.map((combo) => combo.join(' / '))
-    );
-    // // Join combinations into "M / Red / Leather" format
-    return combinations.map((combo) => combo.join(' / '));
+    return cartesian(values).map((combo: any) => combo.join(' / '));
+  }
+
+  getAllVariantValues() {
+    // Clear old data
+    this.generateVariants = [];
+    this.variantCombinations = [];
+
+    // Generate combinations
+    const combinations = this.generateCombinations();
+    this.variantCombinations = combinations;
+
+    // Format as objects
+    this.generateVariants = combinations.map((combo) => ({
+      combo,
+      price: 0,
+      stock: 0,
+    }));
+
+    console.log('Generated Variant Objects:', this.generateVariants);
   }
 
   product: any = {
