@@ -11,8 +11,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { QuillModule } from 'ngx-quill';
 import { MultipleUploadComponent } from '../../../components/multiple-upload/multiple-upload.component';
-import { Variant } from '../../../models/variant.model';
-import { SingleMediaLibraryComponent } from '../../../components/single-media-library/single-media-library.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MediaService } from '../../../services/medias.service';
 import { CreateProductService } from '../../../services/create-product.service';
@@ -34,7 +32,6 @@ import { UpdateProductSerivce } from '../../../services/update-product.service';
     FormsModule,
     QuillModule,
     MultipleUploadComponent,
-    SingleMediaLibraryComponent,
     MatSelectModule,
     MatFormFieldModule,
   ],
@@ -42,10 +39,7 @@ import { UpdateProductSerivce } from '../../../services/update-product.service';
   styleUrl: './edit-product.component.css',
 })
 export class EditProductComponent {
-  @ViewChild('variantOptionsContainer') variantOptionsContainer!: ElementRef;
-  @ViewChild('groupBySelect') groupBySelect!: ElementRef;
   @Output() mediaUrlsChanged = new EventEmitter<any[]>();
-  variantMediaOnly: any[] = []; // Add this
   totalInventory: number | any = 0;
   product: any = {
     title: '',
@@ -64,36 +58,13 @@ export class EditProductComponent {
     mediaUrls: [],
   };
 
-  variantDetailMap:
-    | {
-        [key: string]: { price: number; stock: number; imageVariant: string };
-      }
-    | any = {};
-
-  variantValues: { [key: string]: string[] } = {};
-  groupedVariantData: { [key: string]: any[] } = {};
-  usedOptions: Set<string> = new Set();
-  collapsedGroups: Set<string> = new Set();
-
   categories: any[] = [];
   topLevelCategories: any[] = [];
   medias: any = [];
-  confirmedMediaUrls: Set<string> = new Set();
-  confirmedMediaList: any[] = [];
   meta: any = {};
-  currentVariantImage: string = '';
-  productId: number = 0; // from product detail
-
-  currentVariantForImage: any = null;
-  selectedMediaUrls: Set<string> = new Set();
-  showVariantsTable: boolean = false;
-  @ViewChild(SingleMediaLibraryComponent)
-  mediaLibraryModal!: SingleMediaLibraryComponent;
-
-  groupBy: string = 'size';
-  defaultVariantOptions = ['Size', 'Color', 'Material'];
   profit: string = '';
   margin: string = '';
+
   constructor(
     private route: ActivatedRoute,
     private mediaService: MediaService,
@@ -112,23 +83,11 @@ export class EditProductComponent {
         this.productDetailService.getProductDetailBySlug(slug).subscribe({
           next: (res: any) => {
             this.product = { ...res, id: res.id }; // ✅ Ensure product.id exists
-            this.variantMediaOnly = res.MediaProductDetails || [];
-            this.populateVariantState(res.variants);
             this.updateProfitMargin();
           },
           error: (err: any) => console.error('Failed to load product:', err),
         });
       }
-    });
-
-    // This can remain as-is for the full media library for other components
-    this.route.queryParams.subscribe((params) => {
-      this.mediaService.getMedias(params).subscribe((res) => {
-        // this.productId = res.id;
-
-        this.medias = res.data;
-        this.meta = res.meta;
-      });
     });
   }
 
@@ -167,370 +126,16 @@ export class EditProductComponent {
     this.margin = isNaN(margin) ? '' : `${margin.toFixed(1)}%`;
   }
 
-  get usedOptionsArray(): string[] {
-    return Array.from(this.usedOptions);
-  }
-
-  addOption() {
-    const nextOption = this.defaultVariantOptions.find(
-      (opt) => !this.usedOptions.has(opt)
-    );
-    if (!nextOption) return;
-    this.usedOptions.add(nextOption);
-    this.variantValues[nextOption] = [''];
-  }
-
-  removeOption(option: string) {
-    const previousVariantDetailMap = { ...this.variantDetailMap }; // ✅ Backup
-    const previousUsedOptions = this.usedOptionsArray;
-
-    this.usedOptions.delete(option);
-    delete this.variantValues[option];
-
-    // Rebuild variant table and preserve data
-    this.generateGroupedVariantsObjectWithPreserve(
-      previousVariantDetailMap,
-      previousUsedOptions
-    );
-  }
-
-  generateGroupedVariantsObjectWithPreserve(
-    oldMap: { [key: string]: any },
-    previousUsedOptions: string[]
-  ) {
-    this.syncTableToVariantMap(); // ✅ Capture latest edits before rebuilding
-
-    const cleanedOptions = this.usedOptionsArray
-      .filter((opt) => this.variantValues[opt]?.length)
-      .map((opt) => ({
-        name: opt,
-        values: this.variantValues[opt]
-          .map((val) => val.trim())
-          .filter((val) => val !== ''),
-      }))
-      .filter((opt) => opt.values.length > 0);
-
-    if (cleanedOptions.length === 0) {
-      this.groupedVariantData = {};
-      this.showVariantsTable = false;
-      return;
-    }
-
-    const optionNames = cleanedOptions.map((opt) => opt.name);
-    const newCombinations = this.cartesian(
-      cleanedOptions.map((opt) => opt.values)
-    );
-
-    const groupBy = optionNames[0];
-    const groupIndex = optionNames.indexOf(groupBy);
-    const grouped: { [key: string]: any[] } = {};
-
-    this.variantDetailMap = {}; // Reset
-
-    newCombinations.forEach((combo) => {
-      const variantObj: { [key: string]: any } = {};
-      combo.forEach((val, idx) => {
-        variantObj[optionNames[idx]] = val;
-      });
-
-      // Try to find matching old data
-      const matchedKey = Object.keys(oldMap).find((oldKey) => {
-        const oldParsed = JSON.parse(oldKey);
-        return Object.entries(variantObj).every(([k, v]) => oldParsed[k] === v);
-      });
-
-      const oldData = matchedKey
-        ? oldMap[matchedKey]
-        : { price: 0, stock: 0, imageVariant: '' };
-
-      const variantKey = this.getVariantKeyObject(variantObj);
-
-      this.variantDetailMap[variantKey] = {
-        price: oldData.price,
-        stock: oldData.stock,
-        imageVariant: oldData.imageVariant,
-      };
-
-      const groupKey = combo[groupIndex];
-      if (!grouped[groupKey]) grouped[groupKey] = [];
-      grouped[groupKey].push({
-        ...variantObj,
-        price: oldData.price,
-        stock: oldData.stock,
-        imageVariant: oldData.imageVariant,
-      });
-    });
-
-    this.groupedVariantData = grouped;
-    this.showVariantsTable = this.hasValidVariants();
-    this.updateTotalInventory();
-  }
-
-  addOptionValue(option: string) {
-    this.syncTableToVariantMap(); // ✅ Preserve current edits
-    this.variantValues[option].push('');
-    this.generateGroupedVariantsObject(); // Optional: regenerate immediately
-  }
-
-  removeOptionValue(option: string, index: number) {
-    this.variantValues[option].splice(index, 1);
-  }
-
-  trackByIndex(index: number): number {
-    return index;
-  }
-
-  updateOptionValue(option: string, index: number, event: Event | any) {
-    const input = event.target as HTMLInputElement;
-    this.variantValues[option][index] = input.value.trim();
-  }
-  generateGroupedVariantsObject() {
-    this.syncTableToVariantMap(); // ✅ Always sync current table edits first
-
-    // Step 1: Clean and validate all used option values
-    const cleanedOptions = this.usedOptionsArray
-      .filter((opt) => this.variantValues[opt]?.length)
-      .map((opt) => ({
-        name: opt,
-        values: this.variantValues[opt]
-          .map((val) => val.trim())
-          .filter((val) => val !== ''),
-      }))
-      .filter((opt) => opt.values.length > 0); // Ensure no empty-value options get processed
-
-    // Step 2: If there's nothing meaningful to generate, skip
-    if (cleanedOptions.length === 0) {
-      this.groupedVariantData = {};
-      this.showVariantsTable = false;
-      return;
-    }
-
-    const optionNames = cleanedOptions.map((opt) => opt.name);
-    const newCombinations = this.cartesian(
-      cleanedOptions.map((opt) => opt.values)
-    );
-
-    if (newCombinations.length === 0) {
-      this.groupedVariantData = {};
-      this.showVariantsTable = false;
-      return;
-    }
-
-    const groupBy = optionNames[0];
-    const groupIndex = optionNames.indexOf(groupBy);
-    const grouped: { [key: string]: any[] } = {};
-
-    newCombinations.forEach((combo) => {
-      const variantObj: { [key: string]: any } | any = {};
-      combo.forEach((val, idx) => {
-        variantObj[optionNames[idx]] = val;
-      });
-
-      const variantKey = this.getVariantKeyObject(variantObj);
-      let oldData = this.variantDetailMap[variantKey];
-
-      // Try to match partial fallback data if variant not found
-      if (!oldData) {
-        const fallback = Object.entries(this.variantDetailMap).find(
-          ([key, data]) => {
-            const parsed = JSON.parse(key);
-            return Object.entries(parsed).every(([k, v]) => {
-              return !variantObj[k] || variantObj[k] === v;
-            });
-          }
-        );
-        oldData = fallback?.[1] ?? { price: 0, stock: 0, imageVariant: '' };
-      }
-
-      variantObj.price = oldData.price ?? 0;
-      variantObj.stock = oldData.stock ?? 0;
-      variantObj.imageVariant = oldData.imageVariant ?? '';
-
-      // Store in variantDetailMap
-      this.variantDetailMap[variantKey] = {
-        price: variantObj.price,
-        stock: variantObj.stock,
-        imageVariant: variantObj.imageVariant,
-      };
-
-      const groupKey = combo[groupIndex];
-      if (!grouped[groupKey]) grouped[groupKey] = [];
-      grouped[groupKey].push(variantObj);
-    });
-
-    this.groupedVariantData = grouped;
-    this.showVariantsTable = this.hasValidVariants();
-    this.updateTotalInventory();
-  }
-
-  getVariantKeyObject(variant: any): string {
-    const normalizedEntries = Object.entries(variant)
-      .filter(([key]) => this.usedOptions.has(key.toLowerCase()))
-      .map(([key, value]) => [key.toLowerCase(), value])
-      .sort(([a]: any, [b]) => a.localeCompare(b)); // consistent key order
-
-    return JSON.stringify(Object.fromEntries(normalizedEntries));
-  }
-
-  updateVariantDetail(
-    variant: any,
-    field: 'price' | 'stock' | 'imageVariant',
-    value: any
-  ) {
-    const key = this.getVariantKeyObject(variant);
-    if (!this.variantDetailMap[key]) {
-      this.variantDetailMap[key] = { price: 0, stock: 0, imageVariant: '' };
-    }
-    this.variantDetailMap[key][field] = value;
-    variant[field] = value; // reflect in UI
-    if (field === 'stock') {
-      this.updateTotalInventory();
-    }
-  }
-
-  preserveVariantDetails(
-    oldCombinations: string[][],
-    newCombinations: string[][],
-    optionNames: string[],
-    previousUsedOptions: string[] // 👈 use this for correct matching
-  ) {
-    const newMap: { [key: string]: any } = {};
-    const oldMap = { ...this.variantDetailMap };
-
-    const oldVariants = Object.keys(oldMap).map((key) => {
-      const parsed = JSON.parse(key);
-      const obj: { [key: string]: string } = {};
-      previousUsedOptions.forEach((opt, idx) => {
-        obj[opt] = parsed[idx];
-      });
-      return { key, values: obj };
-    });
-
-    newCombinations.forEach((combo) => {
-      const newKey = combo.join('||');
-      const comboObj: { [key: string]: string } = {};
-      optionNames.forEach((name, idx) => {
-        comboObj[name] = combo[idx];
-      });
-
-      const matched = oldVariants.find((old) =>
-        Object.entries(old.values).every(
-          ([key, value]) => comboObj[key] === value
-        )
-      );
-
-      newMap[newKey] = {
-        price: matched ? oldMap[matched.key].price : 0,
-        stock: matched ? oldMap[matched.key].stock : 0,
-        imageVariant: matched ? oldMap[matched.key].imageVariant : '',
-      };
-    });
-
-    this.variantDetailMap = newMap;
-  }
-
-  hasValidVariants(): boolean {
-    return this.usedOptionsArray.some((opt) =>
-      this.variantValues[opt]?.some((val) => val.trim() !== '')
-    );
-  }
-  openVariantMediaModal(variant: any): void {
-    this.currentVariantForImage = variant;
-    const key = this.getVariantKeyObject(variant); // ✅ Use new method
-    this.currentVariantImage = this.variantDetailMap[key]?.imageVariant || '';
-
-    // Open modal
-    this.mediaLibraryModal.open();
-  }
-
-  onModalConfirmSelection(selectedUrls: string[]): void {
-    if (this.currentVariantForImage && selectedUrls[0]) {
-      this.updateVariantDetail(
-        this.currentVariantForImage,
-        'imageVariant',
-        selectedUrls[0]
-      );
-      this.currentVariantForImage = null;
-    }
-  }
-
   onMediaUrlsChanged(mediaList: any[]): void {
     this.product.mediaUrls = [...mediaList];
     this.product.MediaProductDetails = [...mediaList];
-    this.variantMediaOnly = mediaList.map((m) => ({ ...m }));
-
-    const validUrls = new Set(mediaList.map((m) => m.url));
-    Object.keys(this.variantDetailMap).forEach((key) => {
-      const image = this.variantDetailMap[key].imageVariant;
-      if (image && !validUrls.has(image)) {
-        this.variantDetailMap[key].imageVariant = '';
-      }
-    });
-
-    // ✅ Refresh modal if already initialized
-    if (this.mediaLibraryModal?.refreshMediaList) {
-      this.mediaLibraryModal.refreshMediaList();
-    }
   }
 
   submitProductForm(): void {
-    this.syncTableToVariantMap(); // ✅ Sync table first
-
-    const validUrls = new Set(
-      (this.variantMediaOnly || []).map((m: any) => m.url)
-    );
-
-    Object.keys(this.variantDetailMap).forEach((key) => {
-      const imgUrl = this.variantDetailMap[key]?.imageVariant;
-      if (imgUrl && !validUrls.has(imgUrl)) {
-        this.variantDetailMap[key].imageVariant = '';
-      }
-    });
-
-    const cleanedOptions = this.usedOptionsArray
-      .filter((opt) => this.variantValues[opt]?.length)
-      .map((opt) => ({
-        name: opt,
-        values: this.variantValues[opt].filter((val) => val.trim()),
-      }));
-
-    const combinations = this.cartesian(
-      cleanedOptions.map((opt) => opt.values)
-    );
-    const optionNames = cleanedOptions.map((opt) => opt.name);
-
-    const variants = combinations.map((combo, idx) => {
-      const variant: any = {};
-      const keyObj: any = {};
-
-      combo.forEach((value, i) => {
-        const originalName = optionNames[i];
-        const lowerKey = originalName.toLowerCase(); // API-compatible
-        variant[lowerKey] = value;
-        keyObj[originalName] = value;
-      });
-
-      const key = this.getVariantKeyObject(keyObj);
-      const detail = this.variantDetailMap[key] || {
-        price: 0,
-        stock: 0,
-        imageVariant: '',
-      };
-
-      return {
-        ...variant,
-        price: Number(detail.price),
-        stock: detail.stock,
-        imageVariant: detail.imageVariant,
-        sku: `${combo.join('-')}-SKU${idx + 1}`,
-      };
-    });
-
     const { MediaProductDetails, ...productWithoutMediaDetails } = this.product;
 
     const payload = {
       ...productWithoutMediaDetails,
-      variants,
       MediaProductDetails: this.product.mediaUrls || [],
       type: this.product.type || '',
     };
@@ -555,88 +160,5 @@ export class EditProductComponent {
             }
           ),
       });
-  }
-
-  cartesian(arr: string[][]): string[][] {
-    return arr.reduce(
-      (acc, curr) =>
-        acc
-          .map((x) => curr.map((y) => x.concat(y)))
-          .reduce((a, b) => a.concat(b), []),
-      [[]] as string[][]
-    );
-  }
-
-  populateVariantState(variants: any[]) {
-    this.variantDetailMap = {};
-    this.variantValues = {};
-    this.usedOptions = new Set();
-
-    const editableKeys = ['size', 'color', 'material'];
-
-    variants.forEach((v) => {
-      const keyParts: { [key: string]: string } = {};
-
-      editableKeys.forEach((k) => {
-        const val = v[k];
-        if (val) {
-          const lowerKey = k.toLowerCase();
-          this.usedOptions.add(lowerKey);
-          if (!this.variantValues[lowerKey]) {
-            this.variantValues[lowerKey] = [];
-          }
-          if (!this.variantValues[lowerKey].includes(val)) {
-            this.variantValues[lowerKey].push(val);
-          }
-          keyParts[lowerKey] = val;
-        }
-      });
-
-      const variantKey = this.getVariantKeyObject(keyParts);
-
-      this.variantDetailMap[variantKey] = {
-        price: v.price ?? 0,
-        stock: v.stock ?? 0,
-        imageVariant: v.imageVariant ?? '',
-      };
-    });
-
-    this.generateGroupedVariantsObject();
-  }
-
-  toggleGroupCollapse(groupKey: string) {
-    if (this.collapsedGroups.has(groupKey)) {
-      this.collapsedGroups.delete(groupKey);
-    } else {
-      this.collapsedGroups.add(groupKey);
-    }
-  }
-
-  isGroupCollapsed(groupKey: string): boolean {
-    return this.collapsedGroups.has(groupKey);
-  }
-
-  syncTableToVariantMap() {
-    const allVariants = Object.values(this.groupedVariantData).flat();
-
-    for (const variant of allVariants) {
-      const key = this.getVariantKeyObject(variant);
-
-      if (!this.variantDetailMap[key]) {
-        this.variantDetailMap[key] = { price: 0, stock: 0, imageVariant: '' };
-      }
-
-      this.variantDetailMap[key].price = variant.price ?? 0;
-      this.variantDetailMap[key].stock = variant.stock ?? 0;
-      this.variantDetailMap[key].imageVariant = variant.imageVariant ?? '';
-    }
-    this.updateTotalInventory();
-  }
-
-  updateTotalInventory(): void {
-    this.totalInventory = Object.values(this.variantDetailMap).reduce(
-      (sum, variant: any) => sum + (variant.stock || 0),
-      0
-    );
   }
 }

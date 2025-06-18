@@ -12,7 +12,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { QuillModule } from 'ngx-quill';
 import { MultipleUploadComponent } from '../../../components/multiple-upload/multiple-upload.component';
 import { Variant } from '../../../models/variant.model';
-import { SingleMediaLibraryComponent } from '../../../components/single-media-library/single-media-library.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MediaService } from '../../../services/medias.service';
 import { CreateProductService } from '../../../services/create-product.service';
@@ -38,7 +37,6 @@ interface PaginationMeta {
     FormsModule,
     QuillModule,
     MultipleUploadComponent,
-    SingleMediaLibraryComponent,
     MatSelectModule,
     MatFormFieldModule,
   ],
