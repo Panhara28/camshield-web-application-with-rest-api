@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class EditUserService {
-  private baseUrl = 'http://localhost:8080/users';
+  private baseUrl = 'http://localhost:4000/users';
 
   constructor(private http: HttpClient) {}
 

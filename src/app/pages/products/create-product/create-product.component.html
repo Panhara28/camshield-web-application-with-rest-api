@@ -258,9 +258,9 @@
               <div
                 class="variant-group mb-3"
                 *ngFor="
-                  let group of groupedVariantsLocalStorage.length > 0
-                    ? groupedVariantsLocalStorage
-                    : groupedVariants;
+                  let group of groupedVariants.length > 0
+                    ? groupedVariants
+                    : groupedVariantsLocalStorage;
                   let i = index
                 "
               >

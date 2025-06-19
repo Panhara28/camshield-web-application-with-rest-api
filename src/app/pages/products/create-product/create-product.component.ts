@@ -302,12 +302,21 @@ export class CreateProductComponent {
       image: '',
     }));
 
-    this.groupedVariants = this.groupVariantsByFirstOption();
+    if (this.groupedVariantsLocalStorage.length > 0) {
+      localStorage.setItem(
+        'groupedVariants',
+        JSON.stringify(this.groupedVariantsLocalStorage)
+      );
+    } else {
+      this.groupedVariants = this.groupVariantsByFirstOption();
+      console.log('this.groupedVariants', this.groupedVariants);
+    }
     // Tomorrow working with this function about groupVariants not update in UI but in localStorage
-    localStorage.setItem(
-      'groupedVariants',
-      JSON.stringify(this.groupedVariants)
-    );
+
+    // localStorage.setItem(
+    //   'groupedVariants',
+    //   JSON.stringify(this.groupedVariants)
+    // );
   }
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
@@ -316,7 +325,17 @@ export class CreateProductComponent {
   }
 
   saveTheVaraintToLocalStorage() {
-    console.log(this.groupedVariants);
+    console.log(
+      'groupedVariantsLocalStorage',
+      this.groupedVariantsLocalStorage
+    );
+
+    console.log('Save groupedVariants', this.groupedVariants);
+
+    localStorage.setItem(
+      'groupedVariants',
+      JSON.stringify(this.groupedVariantsLocalStorage)
+    );
   }
 
   product: any = {
