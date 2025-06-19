@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class CreateMediaService {
-  private uploadUrl = 'http://localhost:4000/media/create';
+  private uploadUrl = 'http://localhost:8080/media/create';
 
   constructor(private http: HttpClient) {}
 

@@ -309,14 +309,11 @@ export class CreateProductComponent {
       );
     } else {
       this.groupedVariants = this.groupVariantsByFirstOption();
-      console.log('this.groupedVariants', this.groupedVariants);
+      localStorage.setItem(
+        'groupedVariants',
+        JSON.stringify(this.groupedVariants)
+      );
     }
-    // Tomorrow working with this function about groupVariants not update in UI but in localStorage
-
-    // localStorage.setItem(
-    //   'groupedVariants',
-    //   JSON.stringify(this.groupedVariants)
-    // );
   }
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
