@@ -60,6 +60,8 @@ export class CreateProductComponent {
   groupedVariants: any[] = [];
   varaintOptionsLocalStorage: any[] = [];
   groupedVariantsLocalStorage: any[] = [];
+  private debounceTimer: any;
+  private variantDebounceTimer: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -302,7 +304,6 @@ export class CreateProductComponent {
 
   generateCombinations(): string[] {
     const values = this.getCleanedOptions();
-    console.log('From generateCombinations():', values);
     if (!values.length) return [];
 
     const cartesian = (arr: string[][]): string[][] | any => {
@@ -436,16 +437,11 @@ export class CreateProductComponent {
 
   saveTheVaraintToLocalStorage() {
     if (this.groupedVariantsLocalStorage.length > 0) {
-      console.log(
-        'groupedVariantsLocalStorage',
-        this.groupedVariantsLocalStorage
-      );
       localStorage.setItem(
         'groupedVariants',
         JSON.stringify(this.groupedVariantsLocalStorage)
       );
     } else {
-      console.log('Save groupedVariants', this.groupedVariants);
       localStorage.setItem(
         'groupedVariants',
         JSON.stringify(this.groupedVariants)
@@ -468,11 +464,14 @@ export class CreateProductComponent {
       option.optionValue.push({ value: null });
     }
 
-    // Save updated options to localStorage
+    // Persist current state
     localStorage.setItem('saveToLocalStorage', JSON.stringify(source));
 
-    // ✅ Auto-generate updated variant list
-    this.getAllVariantValues();
+    // ✅ Debounce the auto-generation
+    clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => {
+      this.getAllVariantValues();
+    }, 300); // Adjust delay (ms) as needed
   }
 
   product: any = {

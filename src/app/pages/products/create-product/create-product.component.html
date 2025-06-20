@@ -219,20 +219,6 @@
               <i class="fa fa-plus-circle me-1"></i> Add another option
             </div>
           </div>
-          <button
-            (click)="getAllVariantValues()"
-            class="btn btn-primary mb-4"
-            *ngIf="
-              varaintOptionsLocalStorage?.length! > 0
-                ? true
-                : variantOptions.length > 0
-                ? true
-                : false
-            "
-          >
-            Generate Varaints
-          </button>
-
           <div
             class="variant-card"
             *ngIf="
