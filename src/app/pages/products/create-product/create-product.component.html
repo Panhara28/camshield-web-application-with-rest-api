@@ -182,6 +182,7 @@
                       class="form-control border-start-0"
                       [(ngModel)]="input.value"
                       placeholder="Add Value"
+                      (input)="autoAddNewOptionValue(i, j)"
                     />
                     <button
                       class="btn btn-outline-secondary"
@@ -192,12 +193,6 @@
                     </button>
                   </div>
                 </ng-container>
-                <button
-                  class="btn btn-sm btn-primary"
-                  (click)="addVariantOptionValue(option.optionName)"
-                >
-                  <i class="fa fa-plus me-1"></i> Add Value
-                </button>
               </div>
               <div class="d-flex justify-content-between mt-3">
                 <button

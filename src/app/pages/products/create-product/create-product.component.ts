@@ -453,6 +453,31 @@ export class CreateProductComponent {
     }
   }
 
+  autoAddNewOptionValue(optionIndex: number, valueIndex: number) {
+    const source =
+      this.varaintOptionsLocalStorage.length > 0
+        ? this.varaintOptionsLocalStorage
+        : this.variantOptions;
+
+    const option = source[optionIndex];
+
+    // Check if we're editing the last input and it's not empty
+    const isLast = valueIndex === option.optionValue.length - 1;
+    const currentValue = option.optionValue[valueIndex].value?.trim();
+
+    if (isLast && currentValue) {
+      option.optionValue.push({ value: null });
+
+      // Persist to localStorage
+      const storageKey =
+        this.varaintOptionsLocalStorage.length > 0
+          ? this.varaintOptionsLocalStorage
+          : this.variantOptions;
+
+      localStorage.setItem('saveToLocalStorage', JSON.stringify(storageKey));
+    }
+  }
+
   product: any = {
     title: '',
     description: '',
