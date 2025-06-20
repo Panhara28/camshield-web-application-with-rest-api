@@ -174,7 +174,7 @@ export class CreateProductComponent {
         'saveToLocalStorage',
         JSON.stringify(this.varaintOptionsLocalStorage)
       );
-      this.getAllVariantValues();
+      this.getAllVariantValues(); // ✅ already here
     } else {
       removedOptionName = this.variantOptions[optionIndex].optionName;
       this.variantOptions.splice(optionIndex, 1);
@@ -183,6 +183,7 @@ export class CreateProductComponent {
         'saveToLocalStorage',
         JSON.stringify(this.variantOptions)
       );
+      this.getAllVariantValues(); // ✅ add this here
     }
 
     // 🔥 Remove all variants in groupedVariantsLocalStorage that contain values of the removed option
@@ -240,21 +241,29 @@ export class CreateProductComponent {
 
   removeVariantOptionValue(optionIndex: number, valueIndex: number) {
     if (this.varaintOptionsLocalStorage.length > 0) {
-      this.varaintOptionsLocalStorage[optionIndex].optionValue.splice(
-        valueIndex,
-        1
-      );
+      const option = this.varaintOptionsLocalStorage[optionIndex];
+      option.optionValue.splice(valueIndex, 1);
+      if (option.optionValue.length === 0) {
+        option.optionValue.push({ value: null });
+      }
       localStorage.setItem(
         'saveToLocalStorage',
         JSON.stringify(this.varaintOptionsLocalStorage)
       );
-      this.getAllVariantValues();
+
+      this.getAllVariantValues(); // ✅ Add this line
     } else {
-      this.variantOptions[optionIndex].optionValue.splice(valueIndex, 1);
+      const option = this.variantOptions[optionIndex];
+      option.optionValue.splice(valueIndex, 1);
+      if (option.optionValue.length === 0) {
+        option.optionValue.push({ value: null });
+      }
       localStorage.setItem(
         'saveToLocalStorage',
         JSON.stringify(this.variantOptions)
       );
+
+      this.getAllVariantValues(); // ✅ Add this line
     }
   }
 
