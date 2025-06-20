@@ -76,7 +76,6 @@ export class CreateProductComponent {
     this.localStorageServiceForAddVaraintOptionService
       .changes()
       .subscribe((data: any) => {
-        console.log('data', data);
         if (!data) {
           localStorage.setItem('saveToLocalStorage', '[]');
         } else {
@@ -87,7 +86,6 @@ export class CreateProductComponent {
     this.localStorageServiceForGroupedVariantsService
       .changes()
       .subscribe((data: any) => {
-        console.log('data', data);
         if (!data) {
           localStorage.setItem('groupedVariants', '[]');
         } else {
@@ -104,49 +102,110 @@ export class CreateProductComponent {
     });
   }
 
-  addOption() {
-    if (this.varaintOptionsLocalStorage.length > 0) {
-      const nextIndex = this.varaintOptionsLocalStorage.length;
-      if (nextIndex < this.variants.length) {
-        this.varaintOptionsLocalStorage.push({
-          optionName: this.variants[nextIndex],
-          optionValue: [{ value: null }],
-        });
-
-        localStorage.setItem(
-          'saveToLocalStorage',
-          JSON.stringify(this.varaintOptionsLocalStorage)
-        );
-      }
-    } else {
-      const nextIndex = this.variantOptions.length;
-      if (nextIndex < this.variants.length) {
-        this.variantOptions.push({
-          optionName: this.variants[nextIndex],
-          optionValue: [{ value: null }],
-        });
-
-        localStorage.setItem(
-          'saveToLocalStorage',
-          JSON.stringify(this.variantOptions)
-        );
-      }
-    }
+  sortOptionsByDefinedOrder(optionsArray: any[]) {
+    return optionsArray.sort(
+      (a, b) =>
+        this.variants.indexOf(a.optionName) -
+        this.variants.indexOf(b.optionName)
+    );
   }
 
-  removeOption(optionIndex: number) {
-    if (this.varaintOptionsLocalStorage.length > 0) {
-      this.varaintOptionsLocalStorage.splice(optionIndex, 1);
+  addOption() {
+    const currentOptions =
+      this.varaintOptionsLocalStorage.length > 0
+        ? this.varaintOptionsLocalStorage.map((opt) => opt.optionName)
+        : this.variantOptions.map((opt) => opt.optionName);
 
+    const nextOption = this.variants.find(
+      (variant) => !currentOptions.includes(variant)
+    );
+
+    if (!nextOption) return;
+
+    const newOption = {
+      optionName: nextOption,
+      optionValue: [{ value: null }],
+    };
+
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      this.varaintOptionsLocalStorage.push(newOption);
+      this.varaintOptionsLocalStorage = this.sortOptionsByDefinedOrder(
+        this.varaintOptionsLocalStorage
+      );
       localStorage.setItem(
         'saveToLocalStorage',
         JSON.stringify(this.varaintOptionsLocalStorage)
       );
     } else {
-      this.variantOptions.splice(optionIndex, 1);
+      this.variantOptions.push(newOption);
+      this.variantOptions = this.sortOptionsByDefinedOrder(this.variantOptions);
       localStorage.setItem(
         'saveToLocalStorage',
         JSON.stringify(this.variantOptions)
+      );
+    }
+  }
+
+  extractOptionValues(optionName: string): string[] {
+    const source =
+      this.varaintOptionsLocalStorage.length > 0
+        ? this.varaintOptionsLocalStorage
+        : this.variantOptions;
+
+    const found = source.find((opt) => opt.optionName === optionName);
+    return found
+      ? found.optionValue
+          .map((v: any) => (v.value || '').trim())
+          .filter((v: string) => v !== '')
+      : [];
+  }
+
+  removeOption(optionIndex: number) {
+    let removedOptionName = '';
+
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      removedOptionName =
+        this.varaintOptionsLocalStorage[optionIndex].optionName;
+      this.varaintOptionsLocalStorage.splice(optionIndex, 1);
+      this.varaintOptionsLocalStorage = this.sortOptionsByDefinedOrder(
+        this.varaintOptionsLocalStorage
+      );
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.varaintOptionsLocalStorage)
+      );
+      this.getAllVariantValues();
+    } else {
+      removedOptionName = this.variantOptions[optionIndex].optionName;
+      this.variantOptions.splice(optionIndex, 1);
+      this.variantOptions = this.sortOptionsByDefinedOrder(this.variantOptions);
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.variantOptions)
+      );
+    }
+
+    // 🔥 Remove all variants in groupedVariantsLocalStorage that contain values of the removed option
+    if (removedOptionName) {
+      const removedValues = this.variants.includes(removedOptionName)
+        ? this.extractOptionValues(removedOptionName)
+        : [];
+
+      this.groupedVariantsLocalStorage = this.groupedVariantsLocalStorage
+        .map((group) => ({
+          ...group,
+          variants: group.variants.filter((variant: any) => {
+            const normalizedCombo = this.normalizeComboKey(variant.combo);
+            return !removedValues.some((value) =>
+              normalizedCombo.includes(value)
+            );
+          }),
+        }))
+        .filter((group) => group.variants.length > 0);
+
+      localStorage.setItem(
+        'groupedVariants',
+        JSON.stringify(this.groupedVariantsLocalStorage)
       );
     }
   }
@@ -189,6 +248,7 @@ export class CreateProductComponent {
         'saveToLocalStorage',
         JSON.stringify(this.varaintOptionsLocalStorage)
       );
+      this.getAllVariantValues();
     } else {
       this.variantOptions[optionIndex].optionValue.splice(valueIndex, 1);
       localStorage.setItem(
@@ -202,6 +262,7 @@ export class CreateProductComponent {
     if (this.varaintOptionsLocalStorage.length > 0) {
       return this.varaintOptionsLocalStorage
         .map((opt) => {
+          console.log('From getCleanedOptions(): ', 'This function Okay');
           localStorage.setItem(
             'saveToLocalStorage',
             JSON.stringify(this.varaintOptionsLocalStorage)
@@ -232,6 +293,7 @@ export class CreateProductComponent {
 
   generateCombinations(): string[] {
     const values = this.getCleanedOptions();
+    console.log('From generateCombinations():', values);
     if (!values.length) return [];
 
     const cartesian = (arr: string[][]): string[][] | any => {
@@ -285,35 +347,77 @@ export class CreateProductComponent {
     return grouped;
   }
 
+  normalizeComboKey(combo: string): string {
+    return combo
+      .split(' / ')
+      .map((part) => part.trim())
+      .join(' / ');
+  }
+
   getAllVariantValues() {
-    // Clear old data
+    // Clear old state
     this.generateVariants = [];
     this.variantCombinations = [];
 
-    // Generate combinations
+    // Generate new combinations
     const combinations = this.generateCombinations();
     this.variantCombinations = combinations;
 
-    // Format as objects
-    this.generateVariants = combinations.map((combo) => ({
-      combo,
-      price: 0,
-      stock: 0,
-      image: '',
-    }));
+    // Create a quick map from existing combos to preserve old values
+    const oldVariantsMap = new Map<
+      string,
+      { price: number; stock: number; image: string }
+    >();
 
-    if (this.groupedVariantsLocalStorage.length > 0) {
-      localStorage.setItem(
-        'groupedVariants',
-        JSON.stringify(this.groupedVariantsLocalStorage)
-      );
-    } else {
-      this.groupedVariants = this.groupVariantsByFirstOption();
-      localStorage.setItem(
-        'groupedVariants',
-        JSON.stringify(this.groupedVariants)
-      );
-    }
+    this.groupedVariantsLocalStorage.forEach((group) => {
+      group.variants.forEach((variant: any) => {
+        const normalizedCombo = this.normalizeComboKey(variant.combo);
+        oldVariantsMap.set(normalizedCombo, {
+          price: variant.price,
+          stock: variant.stock,
+          image: variant.image,
+        });
+      });
+    });
+
+    // Generate new variants and preserve data if available
+    this.generateVariants = combinations.map((combo) => {
+      const normalizedCombo = this.normalizeComboKey(combo);
+      let old = oldVariantsMap.get(normalizedCombo);
+
+      // 🧠 Subset fallback: use smaller combo like "Red" for "M/Red" or "L/Red"
+      if (!old) {
+        const newParts = normalizedCombo.split(' / ');
+        for (let [oldCombo, data] of oldVariantsMap.entries()) {
+          const oldParts = oldCombo.split(' / ');
+          const isSubset =
+            oldParts.every((part) => newParts.includes(part)) ||
+            newParts.every((part) => oldParts.includes(part));
+
+          if (isSubset) {
+            old = data;
+            break;
+          }
+        }
+      }
+
+      return {
+        combo,
+        price: old?.price ?? 0,
+        stock: old?.stock ?? 0,
+        image: old?.image ?? '',
+      };
+    });
+
+    // Regroup by first option (e.g., size)
+    this.groupedVariants = this.groupVariantsByFirstOption();
+
+    // Sync localStorage and local copy
+    this.groupedVariantsLocalStorage = [...this.groupedVariants];
+    localStorage.setItem(
+      'groupedVariants',
+      JSON.stringify(this.groupedVariantsLocalStorage)
+    );
   }
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
@@ -322,17 +426,22 @@ export class CreateProductComponent {
   }
 
   saveTheVaraintToLocalStorage() {
-    console.log(
-      'groupedVariantsLocalStorage',
-      this.groupedVariantsLocalStorage
-    );
-
-    console.log('Save groupedVariants', this.groupedVariants);
-
-    localStorage.setItem(
-      'groupedVariants',
-      JSON.stringify(this.groupedVariantsLocalStorage)
-    );
+    if (this.groupedVariantsLocalStorage.length > 0) {
+      console.log(
+        'groupedVariantsLocalStorage',
+        this.groupedVariantsLocalStorage
+      );
+      localStorage.setItem(
+        'groupedVariants',
+        JSON.stringify(this.groupedVariantsLocalStorage)
+      );
+    } else {
+      console.log('Save groupedVariants', this.groupedVariants);
+      localStorage.setItem(
+        'groupedVariants',
+        JSON.stringify(this.groupedVariants)
+      );
+    }
   }
 
   product: any = {
