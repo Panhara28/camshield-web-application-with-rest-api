@@ -55,13 +55,11 @@ export class CreateProductComponent {
 
   variants: string[] = ['size', 'color', 'material'];
 
-  generateVariants: { combo: string; price: number; stock: number }[] = [];
+  generateVariants: { optionValue: any }[] = [];
   variantCombinations: string[] = [];
-  groupedVariants: any[] = [];
+  groupedVariants: any = [];
   varaintOptionsLocalStorage: any[] = [];
   groupedVariantsLocalStorage: any[] = [];
-  private debounceTimer: any;
-  private variantDebounceTimer: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -70,8 +68,7 @@ export class CreateProductComponent {
     private snackBar: MatSnackBar,
     private categoryService: CategoryService,
     private router: Router,
-    private localStorageServiceForAddVaraintOptionService: LocalStorageServiceForAddVaraintOptionService,
-    private localStorageServiceForGroupedVariantsService: LocalStorageServiceForGroupedVariantsService
+    private localStorageServiceForAddVaraintOptionService: LocalStorageServiceForAddVaraintOptionService
   ) {}
 
   ngOnInit() {
@@ -79,19 +76,17 @@ export class CreateProductComponent {
       .changes()
       .subscribe((data: any) => {
         if (!data) {
+          console.warn('LocalStorage data is empty or null');
           localStorage.setItem('saveToLocalStorage', '[]');
+          this.varaintOptionsLocalStorage = [];
         } else {
           this.varaintOptionsLocalStorage = JSON.parse(data);
-        }
-      });
-
-    this.localStorageServiceForGroupedVariantsService
-      .changes()
-      .subscribe((data: any) => {
-        if (!data) {
-          localStorage.setItem('groupedVariants', '[]');
-        } else {
-          this.groupedVariantsLocalStorage = JSON.parse(data);
+          if (JSON.parse(data).length > 0) {
+            const result = this.generateVariantCombinations(
+              this.varaintOptionsLocalStorage
+            );
+            this.groupedVariants = result;
+          }
         }
       });
 
@@ -126,7 +121,7 @@ export class CreateProductComponent {
 
     const newOption = {
       optionName: nextOption,
-      optionValue: [{ value: null }],
+      optionValue: [{ value: null, image: '', price: 0, stock: 0 }],
     };
 
     if (this.varaintOptionsLocalStorage.length > 0) {
@@ -205,11 +200,6 @@ export class CreateProductComponent {
           }),
         }))
         .filter((group) => group.variants.length > 0);
-
-      localStorage.setItem(
-        'groupedVariants',
-        JSON.stringify(this.groupedVariantsLocalStorage)
-      );
     }
   }
 
@@ -278,10 +268,6 @@ export class CreateProductComponent {
             'saveToLocalStorage',
             JSON.stringify(this.varaintOptionsLocalStorage)
           );
-          localStorage.setItem(
-            'groupedVariants',
-            JSON.stringify(this.groupedVariantsLocalStorage)
-          );
           return opt.optionValue
             .map((val: any) => (val.value || '').trim())
             .filter((v: any) => v !== '');
@@ -316,47 +302,6 @@ export class CreateProductComponent {
     return cartesian(values).map((combo: any) => combo.join(' / '));
   }
 
-  groupVariantsByFirstOption() {
-    const grouped: {
-      groupBySize: string;
-      variants: {
-        combo: string;
-        price: number;
-        stock: number;
-        image: string;
-      }[];
-    }[] = [];
-
-    const map = new Map<string, any[]>();
-
-    for (const variant of this.generateVariants) {
-      const parts = variant.combo.split(' / ');
-      const groupKey = parts[0]; // Assume first option is Size
-
-      const entry = {
-        combo: variant.combo,
-        price: variant.price,
-        stock: variant.stock,
-        image: '', // Default image
-      };
-
-      if (!map.has(groupKey)) {
-        map.set(groupKey, [entry]);
-      } else {
-        map.get(groupKey)?.push(entry);
-      }
-    }
-
-    // Format into final structure
-    for (const [key, variants] of map.entries()) {
-      grouped.push({
-        groupBySize: key,
-        variants: variants,
-      });
-    }
-    return grouped;
-  }
-
   normalizeComboKey(combo: string): string {
     return combo
       .split(' / ')
@@ -364,70 +309,96 @@ export class CreateProductComponent {
       .join(' / ');
   }
 
+  generateVariantCombinations(options: any): void | any {
+    const optionValues = options
+      .map((opt: any) => {
+        console.log(opt);
+        return opt.optionValue
+          .filter((val: any) => val.value !== null && val.value?.trim() !== '')
+          .map((val: any) => {
+            return {
+              value: val.value,
+              price: val.price || 0,
+              stock: val.stock || 0,
+              image: val.image || '',
+            };
+          });
+
+        // .filter((group: any) => group.length > 0); // 💥 Exclude any empty option groups
+      })
+      .filter((group: any) => group.length > 0);
+    function cartesianProduct(arr: any[]) {
+      if (arr.length === 0) return [];
+
+      return arr.reduce((a, b) =>
+        a.flatMap((d: any) =>
+          b.map((e: any) => (Array.isArray(d) ? [...d, e] : [d, e]))
+        )
+      );
+    }
+
+    if (optionValues.length > 0) {
+      const combinations = cartesianProduct(optionValues);
+      const flatVariants = combinations.map((combo: any) => {
+        const normalized = Array.isArray(combo) ? combo : [combo];
+        return {
+          varaint: normalized.map((item: any) => item.value).join('/'),
+          price: normalized[0]?.price || 0,
+          stock: normalized[0]?.stock || 0,
+          image: normalized[0]?.image || '',
+        };
+      });
+
+      // ✅ Group by the first option (usually size)
+      const groupedMap: Record<string, any[]> = {};
+
+      flatVariants.forEach((variant: any) => {
+        const sizeKey = variant.varaint.split('/')[0];
+        if (!groupedMap[sizeKey]) {
+          groupedMap[sizeKey] = [];
+        }
+        groupedMap[sizeKey].push(variant);
+      });
+
+      const groupedResult = Object.keys(groupedMap).map((key) => ({
+        groupedSize: key,
+        variants: groupedMap[key],
+      }));
+      return groupedResult;
+    }
+  }
+
   getAllVariantValues() {
-    // Clear old state
     this.generateVariants = [];
     this.variantCombinations = [];
 
-    // Generate new combinations
     const combinations = this.generateCombinations();
     this.variantCombinations = combinations;
 
-    // Create a quick map from existing combos to preserve old values
-    const oldVariantsMap = new Map<
-      string,
-      { price: number; stock: number; image: string }
-    >();
-
-    this.groupedVariantsLocalStorage.forEach((group) => {
-      group.variants.forEach((variant: any) => {
-        const normalizedCombo = this.normalizeComboKey(variant.combo);
-        oldVariantsMap.set(normalizedCombo, {
-          price: variant.price,
-          stock: variant.stock,
-          image: variant.image,
-        });
+    this.variantCombinations.map((v: any) => {
+      this.generateVariants.push({
+        optionValue: [{ value: v, image: '', price: 0, stock: 0 }],
       });
     });
 
-    // Generate new variants and preserve data if available
-    this.generateVariants = combinations.map((combo) => {
-      const normalizedCombo = this.normalizeComboKey(combo);
-      let old = oldVariantsMap.get(normalizedCombo);
-
-      // 🧠 Subset fallback: use smaller combo like "Red" for "M/Red" or "L/Red"
-      if (!old) {
-        const newParts = normalizedCombo.split(' / ');
-        for (let [oldCombo, data] of oldVariantsMap.entries()) {
-          const oldParts = oldCombo.split(' / ');
-          const isSubset =
-            oldParts.every((part) => newParts.includes(part)) ||
-            newParts.every((part) => oldParts.includes(part));
-
-          if (isSubset) {
-            old = data;
-            break;
-          }
-        }
-      }
-
-      return {
-        combo,
-        price: old?.price ?? 0,
-        stock: old?.stock ?? 0,
-        image: old?.image ?? '',
-      };
-    });
-
-    // Regroup by first option (e.g., size)
-    this.groupedVariants = this.groupVariantsByFirstOption();
-
-    // Sync localStorage and local copy
-    this.groupedVariantsLocalStorage = [...this.groupedVariants];
-    localStorage.setItem(
-      'groupedVariants',
-      JSON.stringify(this.groupedVariantsLocalStorage)
-    );
+    if (this.varaintOptionsLocalStorage.length > 0) {
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.varaintOptionsLocalStorage)
+      );
+      const result = this.generateVariantCombinations(
+        this.varaintOptionsLocalStorage
+      );
+      console.log('result.saveToLocalStorage', result);
+      this.groupedVariants = result;
+    } else {
+      localStorage.setItem(
+        'saveToLocalStorage',
+        JSON.stringify(this.variantOptions)
+      );
+      const result = this.generateVariantCombinations(this.variantOptions);
+      this.groupedVariants = result;
+    }
   }
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
@@ -435,18 +406,51 @@ export class CreateProductComponent {
     console.log('selectedIndex', selectedIndex.replace(/\s+/g, ''));
   }
 
+  convertVariantsToOptions(variants: any[], optionNames: string[]): any[] {
+    const optionMap: Record<string, Map<string, any>> = {};
+
+    // Initialize a Map for each optionName
+    optionNames.forEach((name) => {
+      optionMap[name] = new Map<string, any>();
+    });
+
+    variants.forEach((variant) => {
+      const parts = variant.varaint.split('/');
+      parts.forEach((value: string, index: number) => {
+        const optionName = optionNames[index];
+        const currentMap = optionMap[optionName];
+
+        // Only set if not already present
+        if (!currentMap.has(value)) {
+          currentMap.set(value, {
+            value,
+            price: variant.price,
+            stock: variant.stock,
+            image: variant.image || '',
+          });
+        }
+      });
+    });
+
+    // Convert to desired array format
+    const result = Object.entries(optionMap).map(([optionName, map]) => ({
+      optionName,
+      optionValue: Array.from(map.values()),
+    }));
+
+    return result;
+  }
+
   saveTheVaraintToLocalStorage() {
-    if (this.groupedVariantsLocalStorage.length > 0) {
-      localStorage.setItem(
-        'groupedVariants',
-        JSON.stringify(this.groupedVariantsLocalStorage)
-      );
-    } else {
-      localStorage.setItem(
-        'groupedVariants',
-        JSON.stringify(this.groupedVariants)
-      );
-    }
+    const allVariants = this.groupedVariants.flatMap(
+      (group: any) => group.variants
+    );
+    const options = this.convertVariantsToOptions(allVariants, [
+      'size',
+      'color',
+      'material',
+    ]);
+    localStorage.setItem('saveToLocalStorage', JSON.stringify(options));
   }
 
   autoAddNewOptionValue(optionIndex: number, valueIndex: number) {
@@ -461,17 +465,12 @@ export class CreateProductComponent {
 
     // Auto-add new input field if user fills in the last one
     if (isLast && currentValue) {
-      option.optionValue.push({ value: null });
+      option.optionValue.push({ value: null, image: '', price: 0, stock: 0 });
     }
 
     // Persist current state
     localStorage.setItem('saveToLocalStorage', JSON.stringify(source));
-
-    // ✅ Debounce the auto-generation
-    clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => {
-      this.getAllVariantValues();
-    }, 300); // Adjust delay (ms) as needed
+    this.getAllVariantValues();
   }
 
   product: any = {
