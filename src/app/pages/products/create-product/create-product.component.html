@@ -224,7 +224,7 @@
             *ngIf="
               groupedVariantsLocalStorage?.length! > 0
                 ? true
-                : groupedVariants.length > 0
+                : groupedVariants?.length! > 0
                 ? true
                 : false
             "

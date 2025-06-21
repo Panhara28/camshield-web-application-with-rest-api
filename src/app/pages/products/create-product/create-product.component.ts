@@ -97,6 +97,9 @@ export class CreateProductComponent {
         this.meta = res.meta;
       });
     });
+    this.varaintOptionsLocalStorage = this.varaintOptionsLocalStorage.filter(
+      (group: any) => group?.optionValue?.length > 0
+    );
   }
 
   sortOptionsByDefinedOrder(optionsArray: any[]) {
@@ -263,7 +266,6 @@ export class CreateProductComponent {
     if (this.varaintOptionsLocalStorage.length > 0) {
       return this.varaintOptionsLocalStorage
         .map((opt) => {
-          console.log('From getCleanedOptions(): ', 'This function Okay');
           localStorage.setItem(
             'saveToLocalStorage',
             JSON.stringify(this.varaintOptionsLocalStorage)
@@ -312,21 +314,26 @@ export class CreateProductComponent {
   generateVariantCombinations(options: any): void | any {
     const optionValues = options
       .map((opt: any) => {
-        console.log(opt);
-        return opt.optionValue
-          .filter((val: any) => val.value !== null && val.value?.trim() !== '')
-          .map((val: any) => {
-            return {
-              value: val.value,
-              price: val.price || 0,
-              stock: val.stock || 0,
-              image: val.image || '',
-            };
-          });
+        if (opt.optionValue.length > 0) {
+          console.log(opt);
+
+          return opt.optionValue
+            .filter(
+              (val: any) => val.value !== null && val.value?.trim() !== ''
+            )
+            .map((val: any) => {
+              return {
+                value: val.value,
+                price: val.price || 0,
+                stock: val.stock || 0,
+                image: val.image || '',
+              };
+            });
+        }
 
         // .filter((group: any) => group.length > 0); // 💥 Exclude any empty option groups
       })
-      .filter((group: any) => group.length > 0);
+      .filter((group: any) => group?.length! > 0);
     function cartesianProduct(arr: any[]) {
       if (arr.length === 0) return [];
 
@@ -389,7 +396,6 @@ export class CreateProductComponent {
       const result = this.generateVariantCombinations(
         this.varaintOptionsLocalStorage
       );
-      console.log('result.saveToLocalStorage', result);
       this.groupedVariants = result;
     } else {
       localStorage.setItem(
