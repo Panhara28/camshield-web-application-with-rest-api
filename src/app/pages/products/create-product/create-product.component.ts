@@ -307,7 +307,7 @@ export class CreateProductComponent {
   normalizeComboKey(combo: string): string {
     return combo
       .split(' / ')
-      .map((part) => part.trim())
+      .map((part) => part.trim().toLowerCase())
       .join(' / ');
   }
 
@@ -382,29 +382,63 @@ export class CreateProductComponent {
     const combinations = this.generateCombinations();
     this.variantCombinations = combinations;
 
-    this.variantCombinations.map((v: any) => {
-      this.generateVariants.push({
-        optionValue: [{ value: v, image: '', price: 0, stock: 0 }],
+    // Step 1: Flatten old variants
+    const oldComboMap = new Map<
+      string,
+      { price: number; stock: number; image: string }
+    >();
+    this.groupedVariantsLocalStorage.forEach((group) => {
+      group.variants.forEach((variant: any) => {
+        const normalized = this.normalizeComboKey(variant.varaint);
+        oldComboMap.set(normalized, {
+          price: variant.price,
+          stock: variant.stock,
+          image: variant.image,
+        });
       });
     });
 
-    if (this.varaintOptionsLocalStorage.length > 0) {
-      localStorage.setItem(
-        'saveToLocalStorage',
-        JSON.stringify(this.varaintOptionsLocalStorage)
-      );
-      const result = this.generateVariantCombinations(
-        this.varaintOptionsLocalStorage
-      );
-      this.groupedVariants = result;
-    } else {
-      localStorage.setItem(
-        'saveToLocalStorage',
-        JSON.stringify(this.variantOptions)
-      );
-      const result = this.generateVariantCombinations(this.variantOptions);
-      this.groupedVariants = result;
-    }
+    // Step 2: Try exact match first, fallback to partial match (e.g., just "M")
+    const flatVariants = combinations.map((combo: string) => {
+      const normalized = this.normalizeComboKey(combo);
+      let old = oldComboMap.get(normalized);
+
+      if (!old) {
+        const partial = normalized.split(' / ')[0]; // e.g., "M"
+        // Look for any saved combo that starts with that partial
+        const fallback = Array.from(oldComboMap.entries()).find(([key, _]) =>
+          key.startsWith(partial)
+        );
+        old = fallback?.[1]; // fallback to M's previous values
+      }
+
+      return {
+        varaint: combo,
+        price: old?.price ?? 0,
+        stock: old?.stock ?? 0,
+        image: old?.image ?? '',
+      };
+    });
+
+    // Step 3: Group by first value
+    const groupedMap: Record<string, any[]> = {};
+    flatVariants.forEach((variant) => {
+      const first = variant.varaint.split(' / ')[0];
+      if (!groupedMap[first]) groupedMap[first] = [];
+      groupedMap[first].push(variant);
+    });
+
+    // Step 4: Set and persist
+    this.groupedVariants = Object.keys(groupedMap).map((key) => ({
+      groupedSize: key,
+      variants: groupedMap[key],
+    }));
+    this.groupedVariantsLocalStorage = this.groupedVariants;
+    localStorage.setItem(
+      'groupedVariants',
+      JSON.stringify(this.groupedVariants)
+    );
+    this.saveTheVaraintToLocalStorage(); // ✅ persist consistently
   }
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
@@ -459,7 +493,7 @@ export class CreateProductComponent {
     localStorage.setItem('saveToLocalStorage', JSON.stringify(options));
   }
 
-  autoAddNewOptionValue(optionIndex: number, valueIndex: number) {
+  autoAddVariantOptionValue(optionIndex: number, valueIndex: number) {
     const source =
       this.varaintOptionsLocalStorage.length > 0
         ? this.varaintOptionsLocalStorage
