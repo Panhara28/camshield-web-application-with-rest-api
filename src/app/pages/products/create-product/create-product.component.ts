@@ -72,6 +72,7 @@ export class CreateProductComponent {
   ) {}
 
   ngOnInit() {
+    // Restore saved options
     this.localStorageServiceForAddVaraintOptionService
       .changes()
       .subscribe((data: any) => {
@@ -81,7 +82,7 @@ export class CreateProductComponent {
           this.varaintOptionsLocalStorage = [];
         } else {
           this.varaintOptionsLocalStorage = JSON.parse(data);
-          if (JSON.parse(data).length > 0) {
+          if (this.varaintOptionsLocalStorage.length > 0) {
             const result = this.generateVariantCombinations(
               this.varaintOptionsLocalStorage
             );
@@ -90,6 +91,14 @@ export class CreateProductComponent {
         }
       });
 
+    // ✅ Restore groupedVariantsLocalStorage on page refresh
+    const savedGrouped = localStorage.getItem('groupedVariants');
+    if (savedGrouped) {
+      this.groupedVariantsLocalStorage = JSON.parse(savedGrouped);
+    } else {
+      this.groupedVariantsLocalStorage = [];
+    }
+
     this.fetchCategories();
     this.route.queryParams.subscribe((params) => {
       this.mediaService.getMedias(params).subscribe((res) => {
@@ -97,6 +106,7 @@ export class CreateProductComponent {
         this.meta = res.meta;
       });
     });
+
     this.varaintOptionsLocalStorage = this.varaintOptionsLocalStorage.filter(
       (group: any) => group?.optionValue?.length > 0
     );
@@ -382,15 +392,15 @@ export class CreateProductComponent {
     const combinations = this.generateCombinations();
     this.variantCombinations = combinations;
 
-    // Step 1: Flatten old variants
+    // Step 1: Flatten old variant values
     const oldComboMap = new Map<
       string,
       { price: number; stock: number; image: string }
     >();
     this.groupedVariantsLocalStorage.forEach((group) => {
       group.variants.forEach((variant: any) => {
-        const normalized = this.normalizeComboKey(variant.varaint);
-        oldComboMap.set(normalized, {
+        const key = this.normalizeComboKey(variant.varaint);
+        oldComboMap.set(key, {
           price: variant.price,
           stock: variant.stock,
           image: variant.image,
@@ -398,18 +408,24 @@ export class CreateProductComponent {
       });
     });
 
-    // Step 2: Try exact match first, fallback to partial match (e.g., just "M")
+    // Step 2: Preserve values with deepest match fallback
     const flatVariants = combinations.map((combo: string) => {
       const normalized = this.normalizeComboKey(combo);
       let old = oldComboMap.get(normalized);
 
+      // Gradually reduce combo to find closest existing match
       if (!old) {
-        const partial = normalized.split(' / ')[0]; // e.g., "M"
-        // Look for any saved combo that starts with that partial
-        const fallback = Array.from(oldComboMap.entries()).find(([key, _]) =>
-          key.startsWith(partial)
-        );
-        old = fallback?.[1]; // fallback to M's previous values
+        const parts = normalized.split(' / ');
+        for (let i = parts.length - 1; i > 0; i--) {
+          const partial = parts.slice(0, i).join(' / ');
+          const match = Array.from(oldComboMap.entries()).find(([key]) =>
+            key.startsWith(partial)
+          );
+          if (match) {
+            old = match[1];
+            break;
+          }
+        }
       }
 
       return {
@@ -420,7 +436,7 @@ export class CreateProductComponent {
       };
     });
 
-    // Step 3: Group by first value
+    // Step 3: Group by first option (e.g., Size)
     const groupedMap: Record<string, any[]> = {};
     flatVariants.forEach((variant) => {
       const first = variant.varaint.split(' / ')[0];
@@ -428,7 +444,7 @@ export class CreateProductComponent {
       groupedMap[first].push(variant);
     });
 
-    // Step 4: Set and persist
+    // Step 4: Save
     this.groupedVariants = Object.keys(groupedMap).map((key) => ({
       groupedSize: key,
       variants: groupedMap[key],
@@ -438,7 +454,7 @@ export class CreateProductComponent {
       'groupedVariants',
       JSON.stringify(this.groupedVariants)
     );
-    this.saveTheVaraintToLocalStorage(); // ✅ persist consistently
+    this.saveTheVaraintToLocalStorage();
   }
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
