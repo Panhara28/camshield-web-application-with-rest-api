@@ -88,6 +88,7 @@ export class CreateProductComponent {
             );
             this.groupedVariants = result;
           }
+          console.log('this.groupedVariants ', this.groupedVariants);
         }
       });
 
@@ -325,8 +326,6 @@ export class CreateProductComponent {
     const optionValues = options
       .map((opt: any) => {
         if (opt.optionValue.length > 0) {
-          console.log(opt);
-
           return opt.optionValue
             .filter(
               (val: any) => val.value !== null && val.value?.trim() !== ''
@@ -459,7 +458,6 @@ export class CreateProductComponent {
 
   selecteOpenByVaraint(groupBySize: string, groupId: number) {
     const selectedIndex = groupBySize + '/' + groupId.toString();
-    console.log('selectedIndex', selectedIndex.replace(/\s+/g, ''));
   }
 
   convertVariantsToOptions(variants: any[], optionNames: string[]): any[] {
@@ -474,12 +472,12 @@ export class CreateProductComponent {
       const parts = variant.varaint.split('/');
       parts.forEach((value: string, index: number) => {
         const optionName = optionNames[index];
+        const trimmedValue = value.trim(); // ✅ Fix here
         const currentMap = optionMap[optionName];
 
-        // Only set if not already present
-        if (!currentMap.has(value)) {
-          currentMap.set(value, {
-            value,
+        if (!currentMap.has(trimmedValue)) {
+          currentMap.set(trimmedValue, {
+            value: trimmedValue, // ✅ Fix here
             price: variant.price,
             stock: variant.stock,
             image: variant.image || '',
@@ -501,12 +499,26 @@ export class CreateProductComponent {
     const allVariants = this.groupedVariants.flatMap(
       (group: any) => group.variants
     );
-    const options = this.convertVariantsToOptions(allVariants, [
-      'size',
-      'color',
-      'material',
-    ]);
-    localStorage.setItem('saveToLocalStorage', JSON.stringify(options));
+    console.log('allVariants', allVariants);
+    const grouped = Object.values(
+      allVariants.reduce((acc: any, item: any) => {
+        const size = item.varaint.split('/')[0]; // Get the first part (e.g., "M")
+        if (!acc[size]) {
+          acc[size] = { groupedSize: size, variants: [] };
+        }
+        acc[size].variants.push(item);
+        return acc;
+      }, {} as Record<string, { groupedSize: string; variants: typeof allVariants }>)
+    );
+    console.log(grouped);
+
+    // const options = this.convertVariantsToOptions(allVariants, [
+    //   'size',
+    //   'color',
+    //   'material',
+    // ]);
+    // console.log('options', options);
+    // localStorage.setItem('saveToLocalStorage', JSON.stringify(grouped));
   }
 
   autoAddVariantOptionValue(optionIndex: number, valueIndex: number) {

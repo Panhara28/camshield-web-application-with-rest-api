@@ -34,7 +34,7 @@ export interface UpdateProductPayload {
   providedIn: 'root',
 })
 export class UpdateProductSerivce {
-  private baseUrl = 'http://localhost:8080/products/update'; // Replace with your actual API base path
+  private baseUrl = 'http://localhost:4000/products/update'; // Replace with your actual API base path
 
   constructor(private http: HttpClient) {}
 
