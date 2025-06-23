@@ -81,14 +81,11 @@ export class CreateProductComponent {
           localStorage.setItem('saveToLocalStorage', '[]');
           this.varaintOptionsLocalStorage = [];
         } else {
+          const groupedVariants = localStorage.getItem('groupedVariants');
           this.varaintOptionsLocalStorage = JSON.parse(data);
           if (this.varaintOptionsLocalStorage.length > 0) {
-            const result = this.generateVariantCombinations(
-              this.varaintOptionsLocalStorage
-            );
-            this.groupedVariants = result;
+            this.groupedVariants = JSON.parse(groupedVariants || '[]');
           }
-          console.log('this.groupedVariants ', this.groupedVariants);
         }
       });
 
@@ -511,6 +508,7 @@ export class CreateProductComponent {
       }, {} as Record<string, { groupedSize: string; variants: typeof allVariants }>)
     );
     console.log(grouped);
+    localStorage.setItem('groupedVariants', JSON.stringify(grouped));
 
     // const options = this.convertVariantsToOptions(allVariants, [
     //   'size',
